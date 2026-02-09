@@ -85,9 +85,11 @@ export default function App() {
     }
   };
 
+  const isHome = game.screen === 'home';
+
   return (
     <LanguageContext.Provider value={lang}>
-      <div className="max-w-md mx-auto relative">
+      <div className={isHome ? 'relative' : 'max-w-md mx-auto relative'}>
         {/* Connection status banner */}
         {!game.connected && game.screen === 'game' && (
           <div className="fixed top-0 left-0 right-0 z-50 bg-rose-600 text-white text-center text-sm py-2 px-4 animate-fade-in">
