@@ -2,22 +2,41 @@ import type { Server, Socket } from 'socket.io';
 import type { GameManager } from './gameManager.js';
 
 export function registerHandlers(io: Server, gm: GameManager) {
+  function broadcastState(code: string) {
+    const game = gm.getGame(code);
+    if (!game) return;
+    for (const player of game.players) {
+      const socketId = player.socketId;
+      if (!socketId) continue; // Skip disconnected players
+      const state = gm.getPersonalizedState(game, player.id);
+      io.to(socketId).emit('game:state', state);
+    }
+  }
+
+  /** Start (or restart) the 30s turn timer. Chains automatically on expiry. */
+  function startTurnTimerIfNeeded(code: string) {
+    const game = gm.getGame(code);
+    if (!game || game.phase !== 'clues') {
+      gm.clearTurnTimer(code);
+      return;
+    }
+    const activePlayers = game.players.filter((p: { isEliminated: boolean }) => !p.isEliminated);
+    if (game.turnIndex >= activePlayers.length) {
+      gm.clearTurnTimer(code);
+      return;
+    }
+    gm.setTurnTimer(code, () => {
+      gm.skipTurn(code);
+      startTurnTimerIfNeeded(code);
+      broadcastState(code);
+    });
+  }
+
   io.on('connection', (socket: Socket) => {
     console.log(`Connected: ${socket.id}`);
 
     // The persistent playerId sent by the client (survives reconnections)
     let playerId: string | null = null;
-
-    function broadcastState(code: string) {
-      const game = gm.getGame(code);
-      if (!game) return;
-      for (const player of game.players) {
-        const socketId = player.socketId;
-        if (!socketId) continue; // Skip disconnected players
-        const state = gm.getPersonalizedState(game, player.id);
-        io.to(socketId).emit('game:state', state);
-      }
-    }
 
     // Client sends its persistent playerId on connection
     socket.on('auth', ({ playerId: pid }: { playerId: string }) => {
@@ -109,10 +128,16 @@ export function registerHandlers(io: Server, gm: GameManager) {
       if (!playerId) return;
       const game = gm.findGameByPlayerId(playerId);
       if (!game) return;
+      const prevPhase = game.phase;
       const { error } = gm.markRoleReady(playerId, game.code);
       if (error) {
         socket.emit('game:error', { message: error });
         return;
+      }
+      // Start turn timer when transitioning to clues phase
+      const updatedGame = gm.getGame(game.code);
+      if (prevPhase !== 'clues' && updatedGame?.phase === 'clues') {
+        startTurnTimerIfNeeded(game.code);
       }
       broadcastState(game.code);
     });
@@ -126,6 +151,7 @@ export function registerHandlers(io: Server, gm: GameManager) {
         socket.emit('game:error', { message: error });
         return;
       }
+      startTurnTimerIfNeeded(game.code);
       broadcastState(game.code);
     });
 
@@ -138,6 +164,7 @@ export function registerHandlers(io: Server, gm: GameManager) {
         socket.emit('game:error', { message: error });
         return;
       }
+      startTurnTimerIfNeeded(game.code);
       broadcastState(game.code);
     });
 
@@ -221,7 +248,10 @@ export function registerHandlers(io: Server, gm: GameManager) {
         gm.endGame(code);
       } else {
         // Non-host leaving → remove them, game continues
-        gm.removePlayer(playerId);
+        const { game: updatedGame } = gm.removePlayer(playerId);
+        if (updatedGame?.phase === 'clues') {
+          startTurnTimerIfNeeded(code);
+        }
         broadcastState(code);
       }
 
@@ -263,6 +293,9 @@ export function registerHandlers(io: Server, gm: GameManager) {
           }
           gm.endGame(game.code);
         } else {
+          if (game.phase === 'clues') {
+            startTurnTimerIfNeeded(game.code);
+          }
           broadcastState(game.code);
         }
       });
