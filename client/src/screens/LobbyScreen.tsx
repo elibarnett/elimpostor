@@ -38,7 +38,7 @@ export default function LobbyScreen({ gameState, startGame, setMode }: LobbyScre
             {t('lobby.mode')}
           </p>
           {gameState.isHost ? (
-            <div className="flex max-w-sm mx-auto bg-slate-800 rounded-xl p-1 gap-1">
+            <div className="flex max-w-sm mx-auto bg-slate-800/60 backdrop-blur-sm rounded-xl p-1 gap-1">
               <button
                 onClick={() => setMode('online')}
                 className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all cursor-pointer ${

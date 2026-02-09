@@ -41,7 +41,7 @@ export default function RevealScreen({ gameState, markRoleReady }: RevealScreenP
           }`}
         >
           {/* Front (face down) */}
-          <div className="absolute inset-0 backface-hidden rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 border-2 border-slate-600 flex flex-col items-center justify-center p-6">
+          <div className="absolute inset-0 backface-hidden rounded-2xl bg-gradient-to-br from-slate-800/80 to-slate-700/80 backdrop-blur-sm border-2 border-slate-600/60 flex flex-col items-center justify-center p-6">
             <div className="text-6xl mb-4">🃏</div>
             <p className="text-slate-300 text-lg text-center font-medium">
               {t('reveal.tapToSee')}
@@ -94,7 +94,7 @@ export default function RevealScreen({ gameState, markRoleReady }: RevealScreenP
           {t('reveal.playersReady', { count: readyCount, total: totalCount })}
         </p>
         {/* Progress bar */}
-        <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+        <div className="w-full h-2 bg-slate-800/60 rounded-full overflow-hidden">
           <div
             className="h-full bg-violet-500 rounded-full transition-all duration-500"
             style={{ width: `${(readyCount / totalCount) * 100}%` }}

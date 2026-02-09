@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { LanguageContext, useLanguageProvider } from './hooks/useLanguage';
 import { useGameState } from './hooks/useGameState';
 import HomeScreen from './screens/HomeScreen';
@@ -12,9 +13,23 @@ import PlayingScreen from './screens/PlayingScreen';
 import ResultsScreen from './screens/ResultsScreen';
 import LeaveButton from './components/LeaveButton';
 
+function getInitialJoinCode(): string {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('join');
+  if (code) {
+    // Clean the URL without reloading
+    window.history.replaceState({}, '', window.location.pathname);
+    return code.toUpperCase().slice(0, 4);
+  }
+  return '';
+}
+
+const initialJoinCode = getInitialJoinCode();
+
 export default function App() {
   const lang = useLanguageProvider();
-  const game = useGameState();
+  const game = useGameState(initialJoinCode ? 'join' : undefined);
+  const [joinCode] = useState(initialJoinCode);
 
   const renderScreen = () => {
     // If in a game, show the phase-appropriate screen
@@ -79,6 +94,7 @@ export default function App() {
             setScreen={game.setScreen}
             joinGame={game.joinGame}
             error={game.error}
+            initialCode={joinCode}
           />
         );
       default:

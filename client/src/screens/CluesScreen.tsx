@@ -114,7 +114,7 @@ export default function CluesScreen({
           {cluesGiven.map((c, i) => (
             <div
               key={i}
-              className="flex items-center gap-3 bg-slate-800/50 rounded-xl px-4 py-2.5 animate-slide-in"
+              className="flex items-center gap-3 bg-slate-800/50 backdrop-blur-sm rounded-xl px-4 py-2.5 animate-slide-in"
               style={{ animationDelay: `${i * 50}ms` }}
             >
               <div

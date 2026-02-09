@@ -14,9 +14,9 @@ function getPlayerId(): string {
   return id;
 }
 
-export function useGameState() {
+export function useGameState(initialScreen?: AppScreen) {
   const [gameState, setGameState] = useState<GameState | null>(null);
-  const [screen, setScreen] = useState<AppScreen>('home');
+  const [screen, setScreen] = useState<AppScreen>(initialScreen ?? 'home');
   const [error, setError] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
   const socketRef = useRef<Socket | null>(null);

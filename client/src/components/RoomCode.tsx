@@ -33,7 +33,7 @@ export default function RoomCode({ code }: RoomCodeProps) {
         await navigator.share({
           title: 'El Impostor',
           text: `Join my game! Code: ${code}`,
-          url: window.location.origin,
+          url: `${window.location.origin}?join=${code}`,
         });
       } catch {
         // User cancelled

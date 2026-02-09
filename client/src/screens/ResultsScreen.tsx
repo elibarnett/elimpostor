@@ -68,10 +68,10 @@ export default function ResultsScreen({ gameState, playAgain, endGame, transferH
               <div
                 key={player.id}
                 onClick={() => setSelectedHost(player.id)}
-                className={`flex items-center gap-3 p-3 rounded-2xl bg-slate-800 border-2 transition-all duration-200 cursor-pointer active:scale-[0.97] ${
+                className={`flex items-center gap-3 p-3 rounded-2xl bg-slate-800/60 backdrop-blur-sm border-2 transition-all duration-200 cursor-pointer active:scale-[0.97] ${
                   selectedHost === player.id
                     ? 'border-violet-500 scale-[1.02]'
-                    : 'border-slate-700'
+                    : 'border-slate-700/60'
                 }`}
               >
                 <div
@@ -140,7 +140,7 @@ export default function ResultsScreen({ gameState, playAgain, endGame, transferH
               return (
                 <div
                   key={player.id}
-                  className="flex items-center gap-2 text-sm bg-slate-800/50 rounded-xl px-3 py-2"
+                  className="flex items-center gap-2 text-sm bg-slate-800/50 backdrop-blur-sm rounded-xl px-3 py-2"
                 >
                   <div
                     className="w-7 h-7 rounded-full flex items-center justify-center text-xs shrink-0"
