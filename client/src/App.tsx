@@ -90,6 +90,14 @@ export default function App() {
 
   return (
     <LanguageContext.Provider value={lang}>
+      {/* Global background image */}
+      <div
+        className="fixed inset-0 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: 'url(/art/home-bg.jpg)',
+          backgroundColor: '#0f0a1a',
+        }}
+      />
       <div className={isHome ? 'relative' : 'max-w-md mx-auto relative'}>
         {/* Connection status banner */}
         {!game.connected && game.screen === 'game' && (
