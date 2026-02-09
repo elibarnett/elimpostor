@@ -124,6 +124,11 @@ export function useGameState(initialScreen?: AppScreen) {
 
   const leaveGame = useCallback(() => {
     emit('game:leave');
+    // Optimistically reset client state — don't wait for server response
+    // (if the server is unreachable, game:left would never arrive)
+    setGameState(null);
+    setScreen('home');
+    setError(null);
   }, [emit]);
 
   const endGame = useCallback(() => {
