@@ -32,6 +32,7 @@ export interface GameState {
   votes: Record<string, string>;
   round: number;
   turnIndex: number;
+  turnDeadline: number | null;
   playerId: string;
   isHost: boolean;
   hostName: string;

@@ -33,6 +33,7 @@ export interface Game {
   votes: Record<string, string>;
   round: number;
   turnIndex: number;
+  turnDeadline: number | null;
   settings: {
     language: 'es' | 'en';
   };
@@ -59,6 +60,7 @@ export interface PersonalizedGameState {
   votes: Record<string, string>;
   round: number;
   turnIndex: number;
+  turnDeadline: number | null;
   playerId: string;
   isHost: boolean;
   hostName: string;

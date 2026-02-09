@@ -13,6 +13,8 @@ const VOWELS = 'AEIOU';
 
 // Grace period before actually removing a disconnected player
 const DISCONNECT_GRACE_MS = 30_000; // 30 seconds
+// Time limit per clue turn in online mode
+const CLUE_TURN_MS = 30_000; // 30 seconds
 
 export class GameManager {
   private games: Map<string, Game> = new Map();
@@ -20,6 +22,8 @@ export class GameManager {
   private playerGameMap: Map<string, string> = new Map();
   // Disconnect timers: playerId -> timeout handle
   private disconnectTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
+  // Clue turn timers: game code -> timeout handle
+  private turnTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
 
   generateCode(): string {
     let code: string;
@@ -61,6 +65,7 @@ export class GameManager {
       votes: {},
       round: 1,
       turnIndex: 0,
+      turnDeadline: null,
       settings: { language: 'es' },
     };
     this.games.set(code, game);
@@ -163,6 +168,42 @@ export class GameManager {
     this.disconnectTimers.set(playerId, timer);
   }
 
+  /** Set a turn timer for the clues phase. Calls onExpire when time runs out. */
+  setTurnTimer(code: string, onExpire: () => void): void {
+    this.clearTurnTimer(code);
+    const game = this.games.get(code);
+    if (!game) return;
+    game.turnDeadline = Date.now() + CLUE_TURN_MS;
+    const timer = setTimeout(() => {
+      this.turnTimers.delete(code);
+      onExpire();
+    }, CLUE_TURN_MS);
+    this.turnTimers.set(code, timer);
+  }
+
+  /** Clear any active turn timer for a game */
+  clearTurnTimer(code: string): void {
+    const timer = this.turnTimers.get(code);
+    if (timer) {
+      clearTimeout(timer);
+      this.turnTimers.delete(code);
+    }
+    const game = this.games.get(code);
+    if (game) game.turnDeadline = null;
+  }
+
+  /** Skip the current player's turn (timer expired) */
+  skipTurn(code: string): { game?: Game } {
+    const game = this.games.get(code);
+    if (!game || game.phase !== 'clues') return {};
+    const activePlayers = game.players.filter((p) => !p.isEliminated);
+    if (game.turnIndex < activePlayers.length) {
+      game.turnIndex++;
+    }
+    game.turnDeadline = null;
+    return { game };
+  }
+
   removePlayer(playerId: string): { game?: Game; hostChanged?: boolean; gameEnded?: boolean; code?: string } {
     const code = this.playerGameMap.get(playerId);
     if (!code) {
@@ -212,12 +253,14 @@ export class GameManager {
 
     // If impostor left during active game, end the game
     if (wasImpostor && game.phase !== 'lobby' && game.phase !== 'results') {
+      this.clearTurnTimer(code);
       game.phase = 'results';
       return { game, gameEnded: true, code };
     }
 
     // Too few players during active game
     if (game.players.length < 3 && game.phase !== 'lobby' && game.phase !== 'results') {
+      this.clearTurnTimer(code);
       game.phase = 'results';
       return { game, gameEnded: true, code };
     }
@@ -271,6 +314,7 @@ export class GameManager {
     game.votes = {};
     game.round = 1;
     game.turnIndex = 0;
+    game.turnDeadline = null;
 
     game.phase = 'reveal';
     return { game };
@@ -313,6 +357,7 @@ export class GameManager {
     const newHost = game.players.find((p) => p.id === newHostId);
     if (!newHost) return { error: 'player_not_found' };
 
+    this.clearTurnTimer(code);
     // Transfer host
     game.players.forEach((p) => { p.isHost = false; });
     newHost.isHost = true;
@@ -348,6 +393,7 @@ export class GameManager {
 
     // Advance turn
     game.turnIndex++;
+    game.turnDeadline = null;
 
     return { game };
   }
@@ -359,6 +405,7 @@ export class GameManager {
 
     game.round++;
     game.turnIndex = 0;
+    game.turnDeadline = null;
     game.players.forEach((p) => {
       if (!p.isEliminated) p.clue = null;
     });
@@ -371,6 +418,7 @@ export class GameManager {
     if (!game) return { error: 'room_not_found' };
     if (game.hostId !== playerId) return { error: 'not_host' };
 
+    this.clearTurnTimer(code);
     game.phase = 'voting';
     game.votes = {};
     return { game };
@@ -412,6 +460,7 @@ export class GameManager {
     game.votes = {};
     game.round = 1;
     game.turnIndex = 0;
+    game.turnDeadline = null;
     game.players.forEach((p) => {
       p.hasSeenRole = false;
       p.clue = null;
@@ -422,6 +471,7 @@ export class GameManager {
   }
 
   endGame(code: string): void {
+    this.clearTurnTimer(code);
     const game = this.games.get(code);
     if (game) {
       // Clean up player-game mappings and timers
@@ -471,6 +521,7 @@ export class GameManager {
       votes: game.phase === 'results' ? game.votes : this.getVoteProgress(game, playerId),
       round: game.round,
       turnIndex: game.turnIndex,
+      turnDeadline: game.turnDeadline,
       playerId,
       isHost,
       hostName: host?.name ?? '',

@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import { useLanguage } from '../hooks/useLanguage';
 import type { GameState } from '../types';
+
+const TURN_DURATION = 30; // seconds — must match server CLUE_TURN_MS
 
 interface CluesScreenProps {
   gameState: GameState;
@@ -20,10 +22,27 @@ export default function CluesScreen({
   const { t } = useLanguage();
   const [clue, setClue] = useState('');
 
+  const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
+
   const activePlayers = gameState.players.filter((p) => !p.isEliminated);
   const currentPlayer = activePlayers[gameState.turnIndex];
   const isMyTurn = currentPlayer?.id === gameState.playerId;
   const allDone = gameState.turnIndex >= activePlayers.length;
+
+  // Countdown timer based on server turnDeadline
+  useEffect(() => {
+    if (!gameState.turnDeadline || allDone) {
+      setSecondsLeft(null);
+      return;
+    }
+    const update = () => {
+      const remaining = Math.max(0, Math.ceil((gameState.turnDeadline! - Date.now()) / 1000));
+      setSecondsLeft(remaining);
+    };
+    update();
+    const interval = setInterval(update, 200);
+    return () => clearInterval(interval);
+  }, [gameState.turnDeadline, allDone]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,6 +91,33 @@ export default function CluesScreen({
       {/* Current turn / input */}
       {!allDone ? (
         <div className="flex-1 flex flex-col items-center justify-center">
+          {/* Countdown timer */}
+          {secondsLeft !== null && (
+            <div className="flex items-center justify-center mb-4">
+              <div className="relative w-14 h-14">
+                <svg className="w-14 h-14 -rotate-90" viewBox="0 0 56 56">
+                  <circle
+                    cx="28" cy="28" r="24" fill="none"
+                    stroke="currentColor" strokeWidth="3"
+                    className="text-slate-700"
+                  />
+                  <circle
+                    cx="28" cy="28" r="24" fill="none"
+                    strokeWidth="3" strokeLinecap="round"
+                    stroke={secondsLeft > 10 ? '#a78bfa' : secondsLeft > 5 ? '#facc15' : '#f87171'}
+                    strokeDasharray={2 * Math.PI * 24}
+                    strokeDashoffset={2 * Math.PI * 24 * (1 - secondsLeft / TURN_DURATION)}
+                    className="transition-all duration-1000 ease-linear"
+                  />
+                </svg>
+                <span className={`absolute inset-0 flex items-center justify-center text-lg font-bold ${
+                  secondsLeft > 10 ? 'text-violet-400' : secondsLeft > 5 ? 'text-yellow-400' : 'text-red-400'
+                }`}>
+                  {secondsLeft}
+                </span>
+              </div>
+            </div>
+          )}
           {isMyTurn ? (
             <>
               <h3 className="text-2xl font-bold text-violet-400 mb-6">
