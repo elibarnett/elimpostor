@@ -51,6 +51,12 @@ export function useGameState() {
       setError('disconnected');
     });
 
+    socket.on('game:left', () => {
+      setGameState(null);
+      setScreen('home');
+      setError(null);
+    });
+
     socket.on('disconnect', () => {
       setConnected(false);
     });
@@ -116,6 +122,10 @@ export function useGameState() {
     emit('game:playAgain');
   }, [emit]);
 
+  const leaveGame = useCallback(() => {
+    emit('game:leave');
+  }, [emit]);
+
   const endGame = useCallback(() => {
     emit('game:end');
     setGameState(null);
@@ -146,6 +156,7 @@ export function useGameState() {
     revealImpostor,
     transferHost,
     playAgain,
+    leaveGame,
     endGame,
   };
 }

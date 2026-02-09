@@ -204,6 +204,31 @@ export function registerHandlers(io: Server, gm: GameManager) {
       broadcastState(game.code);
     });
 
+    socket.on('game:leave', () => {
+      if (!playerId) return;
+      const game = gm.findGameByPlayerId(playerId);
+      if (!game) return;
+      const code = game.code;
+      const isHost = game.hostId === playerId;
+
+      if (isHost) {
+        // Host leaving → end the game for everyone
+        for (const p of game.players) {
+          if (p.socketId && p.id !== playerId) {
+            io.to(p.socketId).emit('game:ended');
+          }
+        }
+        gm.endGame(code);
+      } else {
+        // Non-host leaving → remove them, game continues
+        gm.removePlayer(playerId);
+        broadcastState(code);
+      }
+
+      socket.leave(code);
+      socket.emit('game:left');
+    });
+
     socket.on('game:end', () => {
       if (!playerId) return;
       const game = gm.findGameByPlayerId(playerId);

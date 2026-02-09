@@ -10,6 +10,7 @@ import CluesScreen from './screens/CluesScreen';
 import VotingScreen from './screens/VotingScreen';
 import PlayingScreen from './screens/PlayingScreen';
 import ResultsScreen from './screens/ResultsScreen';
+import LeaveButton from './components/LeaveButton';
 
 export default function App() {
   const lang = useLanguageProvider();
@@ -95,6 +96,13 @@ export default function App() {
           <div className="fixed top-0 left-0 right-0 z-50 bg-rose-600 text-white text-center text-sm py-2 px-4 animate-fade-in">
             Reconectando...
           </div>
+        )}
+        {/* Leave button on all game screens */}
+        {game.screen === 'game' && game.gameState && (
+          <LeaveButton
+            isHost={game.gameState.isHost}
+            onLeave={game.leaveGame}
+          />
         )}
         {renderScreen()}
       </div>

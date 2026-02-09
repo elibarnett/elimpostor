@@ -92,6 +92,13 @@ const translations = {
     'error.not_your_turn': 'No es tu turno',
     'error.cannot_vote_self': 'No puedes votar por ti mismo',
     'error.disconnected': 'La partida terminó',
+
+    // Leave
+    'leave.confirm': '¿Salir de la partida?',
+    'leave.hostWarning': 'Si sales, la partida terminará para todos.',
+    'leave.playerWarning': 'Serás removido de la partida.',
+    'leave.yes': 'Salir',
+    'leave.cancel': 'Cancelar',
   },
   en: {
     // Home
@@ -186,6 +193,13 @@ const translations = {
     'error.not_your_turn': 'Not your turn',
     'error.cannot_vote_self': 'You can\'t vote for yourself',
     'error.disconnected': 'The game ended',
+
+    // Leave
+    'leave.confirm': 'Leave the game?',
+    'leave.hostWarning': 'If you leave, the game will end for everyone.',
+    'leave.playerWarning': 'You will be removed from the game.',
+    'leave.yes': 'Leave',
+    'leave.cancel': 'Cancel',
   },
 } as const;
 
