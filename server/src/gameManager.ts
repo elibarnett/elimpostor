@@ -258,9 +258,10 @@ export class GameManager {
 
     game.secretWord = word.trim();
 
-    // Randomly pick impostor
-    const randomIndex = Math.floor(Math.random() * game.players.length);
-    game.impostorId = game.players[randomIndex].id;
+    // Randomly pick impostor (exclude the host — they chose the word)
+    const nonHostPlayers = game.players.filter((p) => p.id !== playerId);
+    const randomIndex = Math.floor(Math.random() * nonHostPlayers.length);
+    game.impostorId = nonHostPlayers[randomIndex].id;
 
     // Reset reveal state
     game.players.forEach((p) => {
