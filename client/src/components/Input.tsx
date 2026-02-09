@@ -34,7 +34,7 @@ export default function Input({
       autoComplete="off"
       autoCorrect="off"
       autoCapitalize={uppercase ? 'characters' : 'off'}
-      className={`w-full max-w-sm mx-auto block h-14 rounded-xl bg-slate-800 border border-slate-700 text-white text-lg px-4 text-center placeholder-slate-500 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-colors ${
+      className={`w-full max-w-sm mx-auto block h-14 rounded-xl bg-slate-800/60 backdrop-blur-sm border border-slate-700/60 text-white text-lg px-4 text-center placeholder-slate-500 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-colors ${
         monospace ? 'font-mono text-2xl tracking-[0.3em]' : ''
       } ${className}`}
     />

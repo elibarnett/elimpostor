@@ -19,7 +19,7 @@ export default function LeaveButton({ isHost, onLeave }: LeaveButtonProps) {
           onClick={() => setConfirming(false)}
         />
         {/* Modal */}
-        <div className="relative bg-slate-900 border border-slate-700 rounded-2xl p-6 w-full max-w-sm">
+        <div className="relative bg-slate-900/80 backdrop-blur-md border border-slate-700/60 rounded-2xl p-6 w-full max-w-sm">
           <h3 className="text-xl font-bold text-white text-center mb-2">
             {t('leave.confirm')}
           </h3>

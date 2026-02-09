@@ -8,11 +8,12 @@ interface JoinScreenProps {
   setScreen: (screen: AppScreen) => void;
   joinGame: (code: string, name: string) => void;
   error: string | null;
+  initialCode?: string;
 }
 
-export default function JoinScreen({ setScreen, joinGame, error }: JoinScreenProps) {
+export default function JoinScreen({ setScreen, joinGame, error, initialCode = '' }: JoinScreenProps) {
   const { t } = useLanguage();
-  const [code, setCode] = useState('');
+  const [code, setCode] = useState(initialCode);
   const [name, setName] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -44,13 +45,14 @@ export default function JoinScreen({ setScreen, joinGame, error }: JoinScreenPro
           maxLength={4}
           monospace
           uppercase
-          autoFocus
+          autoFocus={!initialCode}
         />
         <Input
           value={name}
           onChange={setName}
           placeholder={t('join.name')}
           maxLength={20}
+          autoFocus={!!initialCode}
         />
         {error && (
           <p className="text-rose-400 text-sm text-center">{t(`error.${error}` as any)}</p>

@@ -54,12 +54,12 @@ export default function VotingScreen({ gameState, vote }: VotingScreenProps) {
             <div
               key={player.id}
               onClick={isSelf ? undefined : () => setSelected(player.id)}
-              className={`rounded-2xl p-4 border-2 transition-all duration-200 flex flex-col items-center gap-2 ${
+              className={`rounded-2xl p-4 border-2 transition-all duration-200 flex flex-col items-center gap-2 backdrop-blur-sm ${
                 isSelf
-                  ? 'opacity-40 border-slate-700 bg-slate-800/50'
+                  ? 'opacity-40 border-slate-700/60 bg-slate-800/50'
                   : isSelected
-                    ? 'border-violet-500 bg-slate-800 scale-[1.03] cursor-pointer'
-                    : 'border-slate-700 bg-slate-800 cursor-pointer active:scale-[0.97]'
+                    ? 'border-violet-500 bg-slate-800/60 scale-[1.03] cursor-pointer'
+                    : 'border-slate-700/60 bg-slate-800/60 cursor-pointer active:scale-[0.97]'
               }`}
             >
               <div

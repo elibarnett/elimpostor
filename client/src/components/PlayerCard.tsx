@@ -21,10 +21,10 @@ export default function PlayerCard({
     <div
       onClick={disabled ? undefined : onClick}
       style={{ animationDelay: `${animationDelay}ms` }}
-      className={`flex items-center gap-3 p-3 rounded-2xl bg-slate-800 border-2 transition-all duration-200 animate-slide-in ${
+      className={`flex items-center gap-3 p-3 rounded-2xl bg-slate-800/60 backdrop-blur-sm border-2 transition-all duration-200 animate-slide-in ${
         selected
-          ? 'border-violet-500 scale-[1.02] bg-slate-750'
-          : 'border-slate-700'
+          ? 'border-violet-500 scale-[1.02] bg-slate-700/60'
+          : 'border-slate-700/60'
       } ${onClick && !disabled ? 'cursor-pointer active:scale-[0.97]' : ''} ${
         disabled ? 'opacity-50' : ''
       }`}
