@@ -11,14 +11,6 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
 
   return (
     <div className="min-h-dvh flex flex-col relative overflow-hidden animate-fade-in">
-      {/* Background image with fallback gradient */}
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: 'url(/art/home-bg.jpg)',
-          backgroundColor: '#0f0a1a',
-        }}
-      />
       {/* Subtle bottom fade only — for button readability */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
 
