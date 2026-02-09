@@ -1,0 +1,43 @@
+export type GamePhase =
+  | 'lobby'
+  | 'setup'
+  | 'reveal'
+  | 'clues'
+  | 'voting'
+  | 'playing'
+  | 'results';
+
+export type GameMode = 'online' | 'local';
+
+export interface PlayerView {
+  id: string;
+  name: string;
+  avatar: string;
+  color: string;
+  isHost: boolean;
+  hasSeenRole: boolean;
+  clue: string | null;
+  isEliminated: boolean;
+  isConnected: boolean;
+}
+
+export interface GameState {
+  code: string;
+  phase: GamePhase;
+  mode: GameMode;
+  players: PlayerView[];
+  secretWord: string | null;
+  isImpostor: boolean;
+  impostorId: string | null;
+  votes: Record<string, string>;
+  round: number;
+  turnIndex: number;
+  playerId: string;
+  isHost: boolean;
+  hostName: string;
+  settings: {
+    language: 'es' | 'en';
+  };
+}
+
+export type AppScreen = 'home' | 'create' | 'join' | 'game';

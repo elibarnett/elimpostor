@@ -1,0 +1,91 @@
+import Button from '../components/Button';
+import PlayerCard from '../components/PlayerCard';
+import RoomCode from '../components/RoomCode';
+import WaitingDots from '../components/WaitingDots';
+import { useLanguage } from '../hooks/useLanguage';
+import type { GameState, GameMode } from '../types';
+
+interface LobbyScreenProps {
+  gameState: GameState;
+  startGame: () => void;
+  setMode: (mode: GameMode) => void;
+}
+
+export default function LobbyScreen({ gameState, startGame, setMode }: LobbyScreenProps) {
+  const { t } = useLanguage();
+  const canStart = gameState.players.length >= 3;
+
+  return (
+    <div className="min-h-dvh flex flex-col p-6 animate-fade-in">
+      <div className="pt-4 mb-6">
+        <RoomCode code={gameState.code} />
+      </div>
+
+      <div className="text-center text-slate-400 text-sm mb-4">
+        {gameState.players.length} {t('lobby.players')}
+      </div>
+
+      <div className="flex-1 space-y-3 overflow-y-auto mb-6">
+        {gameState.players.map((player, i) => (
+          <PlayerCard key={player.id} player={player} animationDelay={i * 80} />
+        ))}
+      </div>
+
+      <div className="pb-safe">
+        {/* Mode toggle */}
+        <div className="mb-4">
+          <p className="text-slate-400 text-xs text-center mb-2 uppercase tracking-wide">
+            {t('lobby.mode')}
+          </p>
+          {gameState.isHost ? (
+            <div className="flex max-w-sm mx-auto bg-slate-800 rounded-xl p-1 gap-1">
+              <button
+                onClick={() => setMode('online')}
+                className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
+                  gameState.mode === 'online'
+                    ? 'bg-violet-600 text-white'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                🌐 {t('lobby.modeOnline')}
+              </button>
+              <button
+                onClick={() => setMode('local')}
+                className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
+                  gameState.mode === 'local'
+                    ? 'bg-violet-600 text-white'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                🏠 {t('lobby.modeLocal')}
+              </button>
+            </div>
+          ) : (
+            <div className="text-center text-sm text-slate-300">
+              {gameState.mode === 'online' ? '🌐' : '🏠'}{' '}
+              {gameState.mode === 'online' ? t('lobby.modeOnline') : t('lobby.modeLocal')}
+            </div>
+          )}
+        </div>
+
+        {gameState.isHost ? (
+          <div className="space-y-2">
+            <Button onClick={startGame} disabled={!canStart}>
+              {t('lobby.start')}
+            </Button>
+            {!canStart && (
+              <p className="text-slate-500 text-sm text-center">{t('lobby.minPlayers')}</p>
+            )}
+          </div>
+        ) : (
+          <div className="text-center text-slate-400">
+            <p>{t('lobby.waiting', { host: gameState.hostName })}</p>
+            <div className="mt-2">
+              <WaitingDots />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
