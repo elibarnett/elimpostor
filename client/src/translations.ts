@@ -79,6 +79,9 @@ const translations = {
     'results.pickHostHint': '¿Quién elige la siguiente palabra?',
     'results.confirm': 'Confirmar',
 
+    // Connection
+    'connection.reconnecting': 'Reconectando...',
+
     // Errors
     'error.room_not_found': 'Sala no encontrada',
     'error.game_in_progress': 'La partida ya comenzó',
@@ -179,6 +182,9 @@ const translations = {
     'results.pickHost': 'Pick next host',
     'results.pickHostHint': 'Who picks the next word?',
     'results.confirm': 'Confirm',
+
+    // Connection
+    'connection.reconnecting': 'Reconnecting...',
 
     // Errors
     'error.room_not_found': 'Room not found',
