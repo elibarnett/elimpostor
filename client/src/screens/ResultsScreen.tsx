@@ -24,7 +24,7 @@ export default function ResultsScreen({ gameState, playAgain, endGame, transferH
   }, []);
 
   const impostor = gameState.players.find((p) => p.id === gameState.impostorId);
-  const activePlayers = gameState.players.filter((p) => !p.isEliminated);
+  const activePlayers = gameState.players.filter((p) => !p.isEliminated && !p.isSpectator);
 
   // Count votes per player (only relevant for online mode)
   const voteCounts: Record<string, number> = {};
@@ -69,7 +69,7 @@ export default function ResultsScreen({ gameState, playAgain, endGame, transferH
 
         <div className="flex-1 space-y-3 overflow-y-auto mb-6">
           {gameState.players
-            .filter((p) => p.id !== gameState.playerId && p.isConnected)
+            .filter((p) => p.id !== gameState.playerId && p.isConnected && !p.isSpectator)
             .map((player) => (
               <div
                 key={player.id}

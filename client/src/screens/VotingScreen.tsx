@@ -13,7 +13,7 @@ export default function VotingScreen({ gameState, vote }: VotingScreenProps) {
   const { t } = useLanguage();
   const [selected, setSelected] = useState<string | null>(null);
 
-  const activePlayers = gameState.players.filter((p) => !p.isEliminated);
+  const activePlayers = gameState.players.filter((p) => !p.isEliminated && !p.isSpectator);
   const myVote = gameState.votes[gameState.playerId];
   const hasVoted = !!myVote;
 
@@ -26,6 +26,50 @@ export default function VotingScreen({ gameState, vote }: VotingScreenProps) {
       if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
     }
   };
+
+  // Spectators see vote progress without ability to vote
+  if (gameState.isSpectator) {
+    return (
+      <div className="min-h-dvh flex flex-col p-6 pt-12 animate-fade-in">
+        <h2 className="text-2xl font-bold text-white text-center mb-6">
+          {t('voting.title')}
+        </h2>
+
+        <div className="flex-1 grid grid-cols-2 gap-3 content-start mb-4">
+          {activePlayers.map((player) => (
+            <div
+              key={player.id}
+              className="rounded-2xl p-4 border-2 border-slate-700/60 bg-slate-800/60 flex flex-col items-center gap-2 backdrop-blur-sm"
+            >
+              <div
+                className="w-14 h-14 rounded-full flex items-center justify-center text-2xl"
+                style={{ backgroundColor: player.color + '33' }}
+              >
+                {player.avatar}
+              </div>
+              <span className="font-medium text-white text-sm truncate w-full text-center">
+                {player.name}
+              </span>
+              {player.clue && (
+                <span className="text-slate-400 text-xs truncate w-full text-center">
+                  "{player.clue}"
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="pb-safe">
+          <p className="text-center text-slate-500 text-sm mb-2">
+            {t('voting.voted', { count: votedCount, total: totalCount })}
+          </p>
+          <div className="flex justify-center">
+            <WaitingDots />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (hasVoted) {
     return (

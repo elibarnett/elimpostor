@@ -19,7 +19,7 @@ export default function PlayingScreen({ gameState, revealImpostor }: PlayingScre
 
       {/* Player avatars in a circle-like arrangement */}
       <div className="flex flex-wrap justify-center gap-3 mb-10 max-w-xs">
-        {gameState.players.map((player) => (
+        {gameState.players.filter((p) => !p.isSpectator).map((player) => (
           <div key={player.id} className="flex flex-col items-center gap-1">
             <div
               className="w-12 h-12 rounded-full flex items-center justify-center text-xl animate-pulse"

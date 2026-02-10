@@ -58,6 +58,7 @@ export class GameManager {
           avatar: AVATARS[0],
           color: COLORS[0],
           isHost: true,
+          isSpectator: false,
           hasSeenRole: false,
           clue: null,
           isEliminated: false,
@@ -113,6 +114,7 @@ export class GameManager {
       avatar: availableAvatar,
       color: COLORS[game.players.length % COLORS.length],
       isHost: false,
+      isSpectator: false,
       hasSeenRole: false,
       clue: null,
       isEliminated: false,
@@ -120,6 +122,51 @@ export class GameManager {
     };
     game.players.push(player);
     this.playerGameMap.set(playerId, code.toUpperCase());
+    return { game };
+  }
+
+  addSpectator(code: string, playerId: string, socketId: string, playerName: string): { game?: Game; error?: string } {
+    const game = this.games.get(code.toUpperCase());
+    if (!game) return { error: 'room_not_found' };
+    if (game.players.some((p) => p.name.toLowerCase() === playerName.toLowerCase())) {
+      return { error: 'name_taken' };
+    }
+    if (game.players.length >= 15) return { error: 'room_full' };
+
+    const usedAvatars = new Set(game.players.map((p) => p.avatar));
+    const availableAvatar = AVATARS.find((a) => !usedAvatars.has(a)) || AVATARS[game.players.length % AVATARS.length];
+
+    const spectator: Player = {
+      id: playerId,
+      socketId,
+      name: playerName,
+      avatar: availableAvatar,
+      color: COLORS[game.players.length % COLORS.length],
+      isHost: false,
+      isSpectator: true,
+      hasSeenRole: false,
+      clue: null,
+      isEliminated: false,
+      disconnectedAt: null,
+    };
+    game.players.push(spectator);
+    this.playerGameMap.set(playerId, code.toUpperCase());
+    return { game };
+  }
+
+  convertToPlayer(playerId: string, code: string): { game?: Game; error?: string } {
+    const game = this.games.get(code);
+    if (!game) return { error: 'room_not_found' };
+    if (game.phase !== 'lobby') return { error: 'wrong_phase' };
+
+    const player = game.players.find((p) => p.id === playerId);
+    if (!player) return { error: 'player_not_found' };
+    if (!player.isSpectator) return { error: 'already_player' };
+
+    const nonSpectatorCount = game.players.filter((p) => !p.isSpectator).length;
+    if (nonSpectatorCount >= 15) return { error: 'room_full' };
+
+    player.isSpectator = false;
     return { game };
   }
 
@@ -203,7 +250,7 @@ export class GameManager {
   skipTurn(code: string): { game?: Game } {
     const game = this.games.get(code);
     if (!game || game.phase !== 'clues') return {};
-    const activePlayers = game.players.filter((p) => !p.isEliminated);
+    const activePlayers = game.players.filter((p) => !p.isEliminated && !p.isSpectator);
     if (game.turnIndex < activePlayers.length) {
       game.turnIndex++;
     }
@@ -242,6 +289,7 @@ export class GameManager {
   private _removePlayerFromGame(code: string, game: Game, playerIndex: number, playerId: string): { game?: Game; hostChanged?: boolean; gameEnded?: boolean; code?: string } {
     const wasHost = game.players[playerIndex].isHost;
     const wasImpostor = game.players[playerIndex].id === game.impostorId;
+    const wasSpectator = game.players[playerIndex].isSpectator;
     game.players.splice(playerIndex, 1);
     this.playerGameMap.delete(playerId);
 
@@ -258,6 +306,11 @@ export class GameManager {
       return { gameEnded: true, code };
     }
 
+    // Spectator leaving doesn't affect game state
+    if (wasSpectator) {
+      return { game, code };
+    }
+
     // If impostor left during active game, end the game
     if (wasImpostor && game.phase !== 'lobby' && game.phase !== 'results') {
       this.clearTurnTimer(code);
@@ -266,8 +319,9 @@ export class GameManager {
       return { game, gameEnded: true, code };
     }
 
-    // Too few players during active game
-    if (game.players.length < 3 && game.phase !== 'lobby' && game.phase !== 'results') {
+    // Too few actual players during active game
+    const actualPlayers = game.players.filter((p) => !p.isSpectator);
+    if (actualPlayers.length < 3 && game.phase !== 'lobby' && game.phase !== 'results') {
       this.clearTurnTimer(code);
       this.clearGuessTimer(code);
       game.phase = 'results';
@@ -276,14 +330,16 @@ export class GameManager {
 
     let hostChanged = false;
     if (wasHost && game.players.length > 0) {
-      game.players[0].isHost = true;
-      game.hostId = game.players[0].id;
+      // Transfer host to first non-spectator player, or first player if all are spectators
+      const nextHost = game.players.find((p) => !p.isSpectator) || game.players[0];
+      nextHost.isHost = true;
+      game.hostId = nextHost.id;
       hostChanged = true;
     }
 
     // Fix turnIndex if needed during clues
     if (game.phase === 'clues') {
-      const activePlayers = game.players.filter((p) => !p.isEliminated);
+      const activePlayers = game.players.filter((p) => !p.isEliminated && !p.isSpectator);
       if (game.turnIndex >= activePlayers.length) {
         game.turnIndex = 0;
       }
@@ -296,7 +352,8 @@ export class GameManager {
     const game = this.games.get(code);
     if (!game) return { error: 'room_not_found' };
     if (game.hostId !== playerId) return { error: 'not_host' };
-    if (game.players.length < 3) return { error: 'not_enough_players' };
+    const actualPlayers = game.players.filter((p) => !p.isSpectator);
+    if (actualPlayers.length < 3) return { error: 'not_enough_players' };
 
     game.phase = 'setup';
     return { game };
@@ -310,15 +367,17 @@ export class GameManager {
 
     game.secretWord = word.trim();
 
-    // Randomly pick impostor (exclude the host — they chose the word)
-    const nonHostPlayers = game.players.filter((p) => p.id !== playerId);
+    // Randomly pick impostor (exclude the host and spectators — host chose the word)
+    const nonHostPlayers = game.players.filter((p) => p.id !== playerId && !p.isSpectator);
     const randomIndex = Math.floor(Math.random() * nonHostPlayers.length);
     game.impostorId = nonHostPlayers[randomIndex].id;
 
-    // Reset reveal state
+    // Reset reveal state (only for actual players, not spectators)
     game.players.forEach((p) => {
-      p.hasSeenRole = false;
-      p.clue = null;
+      if (!p.isSpectator) {
+        p.hasSeenRole = false;
+        p.clue = null;
+      }
     });
     game.votes = {};
     game.round = 1;
@@ -338,11 +397,13 @@ export class GameManager {
 
     const player = game.players.find((p) => p.id === playerId);
     if (!player) return { error: 'player_not_found' };
+    if (player.isSpectator) return { error: 'spectator_cannot_act' };
 
     player.hasSeenRole = true;
 
-    // Check if all players have seen their role
-    const allReady = game.players.every((p) => p.hasSeenRole);
+    // Check if all actual players have seen their role (spectators excluded)
+    const actualPlayers = game.players.filter((p) => !p.isSpectator);
+    const allReady = actualPlayers.every((p) => p.hasSeenRole);
     if (allReady) {
       // Local mode goes to 'playing' (in-person), online goes to 'clues'
       game.phase = game.mode === 'local' ? 'playing' : 'clues';
@@ -386,9 +447,11 @@ export class GameManager {
     game.impostorGuessCorrect = null;
     game.guessDeadline = null;
     game.players.forEach((p) => {
-      p.hasSeenRole = false;
-      p.clue = null;
-      p.isEliminated = false;
+      if (!p.isSpectator) {
+        p.hasSeenRole = false;
+        p.clue = null;
+        p.isEliminated = false;
+      }
     });
 
     return { game };
@@ -399,7 +462,7 @@ export class GameManager {
     if (!game) return { error: 'room_not_found' };
     if (game.phase !== 'clues') return { error: 'wrong_phase' };
 
-    const activePlayers = game.players.filter((p) => !p.isEliminated);
+    const activePlayers = game.players.filter((p) => !p.isEliminated && !p.isSpectator);
     const currentPlayer = activePlayers[game.turnIndex];
     if (!currentPlayer || currentPlayer.id !== playerId) return { error: 'not_your_turn' };
     if (!clue.trim()) return { error: 'empty_clue' };
@@ -422,7 +485,7 @@ export class GameManager {
     game.turnIndex = 0;
     game.turnDeadline = null;
     game.players.forEach((p) => {
-      if (!p.isEliminated) p.clue = null;
+      if (!p.isEliminated && !p.isSpectator) p.clue = null;
     });
 
     return { game };
@@ -447,14 +510,15 @@ export class GameManager {
 
     const voter = game.players.find((p) => p.id === playerId);
     if (!voter) return { error: 'player_not_found' };
+    if (voter.isSpectator) return { error: 'spectator_cannot_act' };
 
     const target = game.players.find((p) => p.id === votedForId);
     if (!target) return { error: 'target_not_found' };
 
     game.votes[playerId] = votedForId;
 
-    // Check if all active players have voted
-    const activePlayers = game.players.filter((p) => !p.isEliminated);
+    // Check if all active players have voted (spectators excluded)
+    const activePlayers = game.players.filter((p) => !p.isEliminated && !p.isSpectator);
     const allVoted = activePlayers.every((p) => game.votes[p.id]);
 
     if (allVoted) {
@@ -546,9 +610,11 @@ export class GameManager {
     game.impostorGuessCorrect = null;
     game.guessDeadline = null;
     game.players.forEach((p) => {
-      p.hasSeenRole = false;
-      p.clue = null;
-      p.isEliminated = false;
+      if (!p.isSpectator) {
+        p.hasSeenRole = false;
+        p.clue = null;
+        p.isEliminated = false;
+      }
     });
 
     return { game };
@@ -575,8 +641,17 @@ export class GameManager {
   getPersonalizedState(game: Game, playerId: string): PersonalizedGameState {
     const player = game.players.find((p) => p.id === playerId);
     const isHost = player?.isHost ?? false;
-    const isImpostor = game.impostorId === playerId;
+    const isSpectator = player?.isSpectator ?? false;
+    const isImpostor = !isSpectator && game.impostorId === playerId;
     const host = game.players.find((p) => p.isHost);
+    const spectatorCount = game.players.filter((p) => p.isSpectator).length;
+
+    // Spectators: hide secret word and impostor identity until results
+    const showSecretWord = game.phase === 'results'
+      ? game.secretWord
+      : (isSpectator || isImpostor)
+        ? null
+        : game.secretWord;
 
     return {
       code: game.code,
@@ -588,20 +663,16 @@ export class GameManager {
         avatar: p.avatar,
         color: p.color,
         isHost: p.isHost,
+        isSpectator: p.isSpectator,
         hasSeenRole: p.hasSeenRole,
         clue: p.clue,
         isEliminated: p.isEliminated,
         isConnected: p.disconnectedAt === null,
       })),
-      // Only show word to non-impostors during reveal/clues/voting/playing
-      // During impostor-guess, still hide word from impostor (they're guessing it)
-      secretWord:
-        game.phase === 'results'
-          ? game.secretWord
-          : isImpostor
-            ? null
-            : game.secretWord,
+      spectatorCount,
+      secretWord: showSecretWord,
       isImpostor,
+      isSpectator,
       // Reveal impostor during impostor-guess and results
       impostorId: (game.phase === 'results' || game.phase === 'impostor-guess') ? game.impostorId : null,
       votes: (game.phase === 'results' || game.phase === 'impostor-guess') ? game.votes : this.getVoteProgress(game, playerId),
