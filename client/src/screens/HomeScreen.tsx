@@ -12,12 +12,12 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
   return (
     <div className="min-h-dvh flex flex-col relative overflow-hidden animate-fade-in">
       {/* Subtle bottom fade only — for button readability */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent pointer-events-none" />
 
       {/* Language toggle */}
       <button
         onClick={() => setLanguage(language === 'es' ? 'en' : 'es')}
-        className="absolute top-4 right-4 z-10 text-2xl cursor-pointer hover:scale-110 transition-transform active:scale-95 drop-shadow-lg"
+        className="absolute top-4 right-4 z-20 text-2xl cursor-pointer hover:scale-110 transition-transform active:scale-95 drop-shadow-lg"
         aria-label="Toggle language"
       >
         {language === 'es' ? '🇬🇧' : '🇪🇸'}
