@@ -15,6 +15,7 @@ export interface PlayerView {
   avatar: string;
   color: string;
   isHost: boolean;
+  isSpectator: boolean;
   hasSeenRole: boolean;
   clue: string | null;
   isEliminated: boolean;
@@ -26,8 +27,10 @@ export interface GameState {
   phase: GamePhase;
   mode: GameMode;
   players: PlayerView[];
+  spectatorCount: number;
   secretWord: string | null;
   isImpostor: boolean;
+  isSpectator: boolean;
   impostorId: string | null;
   votes: Record<string, string>;
   round: number;

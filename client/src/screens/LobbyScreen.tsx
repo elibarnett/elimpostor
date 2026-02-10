@@ -9,20 +9,27 @@ interface LobbyScreenProps {
   gameState: GameState;
   startGame: () => void;
   setMode: (mode: GameMode) => void;
+  convertToPlayer: () => void;
 }
 
-export default function LobbyScreen({ gameState, startGame, setMode }: LobbyScreenProps) {
+export default function LobbyScreen({ gameState, startGame, setMode, convertToPlayer }: LobbyScreenProps) {
   const { t } = useLanguage();
-  const canStart = gameState.players.length >= 3;
+  const actualPlayers = gameState.players.filter((p) => !p.isSpectator);
+  const canStart = actualPlayers.length >= 3;
 
   return (
-    <div className="min-h-dvh flex flex-col p-6 animate-fade-in">
+    <div className={`min-h-dvh flex flex-col p-6 animate-fade-in ${gameState.isSpectator ? 'pt-12' : ''}`}>
       <div className="pt-4 mb-6">
         <RoomCode code={gameState.code} />
       </div>
 
       <div className="text-center text-slate-400 text-sm mb-4">
-        {gameState.players.length} {t('lobby.players')}
+        {actualPlayers.length} {t('lobby.players')}
+        {gameState.spectatorCount > 0 && (
+          <span className="ml-2 text-amber-400">
+            · {t('lobby.spectators', { count: gameState.spectatorCount })}
+          </span>
+        )}
       </div>
 
       <div className="flex-1 space-y-3 overflow-y-auto mb-6">
@@ -68,7 +75,19 @@ export default function LobbyScreen({ gameState, startGame, setMode }: LobbyScre
           )}
         </div>
 
-        {gameState.isHost ? (
+        {gameState.isSpectator ? (
+          <div className="space-y-2">
+            <Button onClick={convertToPlayer}>
+              {t('spectator.joinAsPlayer')}
+            </Button>
+            <div className="text-center text-slate-400">
+              <p>{t('lobby.waiting', { host: gameState.hostName })}</p>
+              <div className="mt-2">
+                <WaitingDots />
+              </div>
+            </div>
+          </div>
+        ) : gameState.isHost ? (
           <div className="space-y-2">
             <Button onClick={startGame} disabled={!canStart}>
               {t('lobby.start')}

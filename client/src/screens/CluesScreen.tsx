@@ -24,9 +24,9 @@ export default function CluesScreen({
 
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
 
-  const activePlayers = gameState.players.filter((p) => !p.isEliminated);
+  const activePlayers = gameState.players.filter((p) => !p.isEliminated && !p.isSpectator);
   const currentPlayer = activePlayers[gameState.turnIndex];
-  const isMyTurn = currentPlayer?.id === gameState.playerId;
+  const isMyTurn = !gameState.isSpectator && currentPlayer?.id === gameState.playerId;
   const allDone = gameState.turnIndex >= activePlayers.length;
 
   // Countdown timer based on server turnDeadline
@@ -177,7 +177,7 @@ export default function CluesScreen({
       )}
 
       {/* Host controls when round is done */}
-      {allDone && gameState.isHost && (
+      {allDone && gameState.isHost && !gameState.isSpectator && (
         <div className="space-y-3 pb-safe">
           <Button onClick={startVoting}>{t('clues.goToVoting')}</Button>
           <Button onClick={nextRound} variant="secondary">
