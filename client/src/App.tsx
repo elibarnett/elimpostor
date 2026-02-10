@@ -10,6 +10,7 @@ import RevealScreen from './screens/RevealScreen';
 import CluesScreen from './screens/CluesScreen';
 import VotingScreen from './screens/VotingScreen';
 import PlayingScreen from './screens/PlayingScreen';
+import ImpostorGuessScreen from './screens/ImpostorGuessScreen';
 import ResultsScreen from './screens/ResultsScreen';
 import LeaveButton from './components/LeaveButton';
 
@@ -64,6 +65,13 @@ export default function App() {
             <PlayingScreen
               gameState={gs}
               revealImpostor={game.revealImpostor}
+            />
+          );
+        case 'impostor-guess':
+          return (
+            <ImpostorGuessScreen
+              gameState={gs}
+              guessWord={game.guessWord}
             />
           );
         case 'results':

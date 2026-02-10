@@ -5,6 +5,7 @@ export type GamePhase =
   | 'clues'
   | 'voting'
   | 'playing'
+  | 'impostor-guess'
   | 'results';
 
 export type GameMode = 'online' | 'local';
@@ -33,6 +34,9 @@ export interface GameState {
   round: number;
   turnIndex: number;
   turnDeadline: number | null;
+  impostorGuess: string | null;
+  impostorGuessCorrect: boolean | null;
+  guessDeadline: number | null;
   playerId: string;
   isHost: boolean;
   hostName: string;

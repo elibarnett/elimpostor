@@ -13,6 +13,14 @@ export function registerHandlers(io: Server, gm: GameManager) {
     }
   }
 
+  /** Start the 15s guess timer for the impostor-guess phase. */
+  function startGuessTimer(code: string) {
+    gm.setGuessTimer(code, () => {
+      const { game } = gm.expireGuess(code);
+      if (game) broadcastState(code);
+    });
+  }
+
   /** Start (or restart) the 30s turn timer. Chains automatically on expiry. */
   function startTurnTimerIfNeeded(code: string) {
     const game = gm.getGame(code);
@@ -184,7 +192,25 @@ export function registerHandlers(io: Server, gm: GameManager) {
       if (!playerId) return;
       const game = gm.findGameByPlayerId(playerId);
       if (!game) return;
+      const prevPhase = game.phase;
       const { error } = gm.vote(playerId, game.code, votedForId);
+      if (error) {
+        socket.emit('game:error', { message: error });
+        return;
+      }
+      // Start guess timer when transitioning to impostor-guess phase
+      const updatedGame = gm.getGame(game.code);
+      if (prevPhase !== 'impostor-guess' && updatedGame?.phase === 'impostor-guess') {
+        startGuessTimer(game.code);
+      }
+      broadcastState(game.code);
+    });
+
+    socket.on('game:guessWord', ({ guess }: { guess: string }) => {
+      if (!playerId) return;
+      const game = gm.findGameByPlayerId(playerId);
+      if (!game) return;
+      const { error } = gm.guessWord(playerId, game.code, guess);
       if (error) {
         socket.emit('game:error', { message: error });
         return;

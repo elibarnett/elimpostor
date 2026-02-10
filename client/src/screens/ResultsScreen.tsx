@@ -37,6 +37,12 @@ export default function ResultsScreen({ gameState, playAgain, endGame, transferH
   const maxVotes = Math.max(...Object.values(voteCounts), 0);
   const impostorCaught = impostorVotes > 0 && impostorVotes >= maxVotes;
 
+  // Impostor guess results
+  const hasGuessData = gameState.impostorGuessCorrect !== null;
+  const guessedCorrectly = gameState.impostorGuessCorrect === true;
+  // If impostor guessed correctly, they win despite being caught
+  const impostorWins = !impostorCaught || guessedCorrectly;
+
   if (phase === 'suspense') {
     return (
       <div className="min-h-dvh flex flex-col items-center justify-center p-6 animate-fade-in">
@@ -122,12 +128,28 @@ export default function ResultsScreen({ gameState, playAgain, endGame, transferH
 
         {/* Outcome (online mode only — local mode outcome is determined in person) */}
         {!isLocal && (
-          <div
-            className={`text-center text-xl font-bold mb-8 ${
-              impostorCaught ? 'text-emerald-400' : 'text-rose-400'
-            }`}
-          >
-            {impostorCaught ? t('results.caught') : t('results.won')}
+          <div className="text-center mb-8">
+            <div
+              className={`text-xl font-bold ${
+                impostorWins ? 'text-rose-400' : 'text-emerald-400'
+              }`}
+            >
+              {impostorWins ? t('results.won') : t('results.caught')}
+            </div>
+            {/* Show guess info if the impostor had a guess phase */}
+            {hasGuessData && (
+              <div className="mt-2 text-sm">
+                {gameState.impostorGuess ? (
+                  <p className={guessedCorrectly ? 'text-emerald-400' : 'text-slate-400'}>
+                    {guessedCorrectly
+                      ? t('results.guessCorrect', { guess: gameState.impostorGuess })
+                      : t('results.guessWrong', { guess: gameState.impostorGuess })}
+                  </p>
+                ) : (
+                  <p className="text-slate-500">{t('results.guessTimeout')}</p>
+                )}
+              </div>
+            )}
           </div>
         )}
 
