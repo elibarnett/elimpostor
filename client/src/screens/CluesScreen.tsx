@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Button from '../components/Button';
 import Input from '../components/Input';
+import WaitingDots from '../components/WaitingDots';
 import { useLanguage } from '../hooks/useLanguage';
 import type { GameState } from '../types';
 
@@ -66,26 +67,39 @@ export default function CluesScreen({
 
       {/* Turn order */}
       <div className="flex gap-2 overflow-x-auto pb-3 mb-4 scrollbar-hide">
-        {activePlayers.map((player, i) => (
-          <div
-            key={player.id}
-            className={`shrink-0 flex flex-col items-center gap-1 ${
-              i === gameState.turnIndex && !allDone ? 'scale-110' : 'opacity-60'
-            } transition-all duration-300`}
-          >
+        {activePlayers.map((player, i) => {
+          const isCurrent = i === gameState.turnIndex && !allDone;
+          const wasSkipped = i < gameState.turnIndex && !player.clue;
+
+          return (
             <div
-              className={`w-12 h-12 rounded-full flex items-center justify-center text-xl ${
-                i === gameState.turnIndex && !allDone
-                  ? 'ring-2 ring-violet-500 ring-offset-2 ring-offset-slate-950 animate-pulse'
-                  : ''
-              } ${player.clue ? 'opacity-100' : ''}`}
-              style={{ backgroundColor: player.color + '33' }}
+              key={player.id}
+              className={`shrink-0 flex flex-col items-center gap-1 ${
+                isCurrent ? 'scale-110' : 'opacity-60'
+              } transition-all duration-300`}
             >
-              {player.avatar}
+              <div
+                className={`w-12 h-12 rounded-full flex items-center justify-center text-xl ${
+                  isCurrent
+                    ? 'ring-2 ring-violet-500 ring-offset-2 ring-offset-slate-950 animate-pulse'
+                    : wasSkipped
+                      ? 'ring-2 ring-red-400/30'
+                      : ''
+                } ${player.clue ? 'opacity-100' : ''}`}
+                style={{ backgroundColor: player.color + '33' }}
+              >
+                {player.avatar}
+              </div>
+              <span
+                className={`text-xs truncate max-w-[3.5rem] ${
+                  wasSkipped ? 'text-red-400/60 line-through' : 'text-slate-400'
+                }`}
+              >
+                {player.name}
+              </span>
             </div>
-            <span className="text-xs text-slate-400 truncate max-w-[3.5rem]">{player.name}</span>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Current turn / input */}
@@ -150,8 +164,17 @@ export default function CluesScreen({
             </div>
           )}
         </div>
-      ) : (
+      ) : gameState.isHost && !gameState.isSpectator ? (
         <div className="flex-1" />
+      ) : (
+        <div className="flex-1 flex flex-col items-center justify-center">
+          <p className="text-slate-400 text-lg text-center">
+            {t('clues.waiting', { host: gameState.hostName })}
+          </p>
+          <div className="mt-4">
+            <WaitingDots />
+          </div>
+        </div>
       )}
 
       {/* Clues list */}

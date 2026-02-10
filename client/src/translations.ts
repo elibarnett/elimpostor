@@ -56,6 +56,8 @@ const translations = {
     'clues.turnOf': 'Es el turno de {name}...',
     'clues.goToVoting': 'Ir a votación',
     'clues.anotherRound': 'Otra ronda',
+    'clues.waiting': 'Esperando a que {host} continúe...',
+    'clues.skipped': 'Pasó',
 
     // Voting
     'voting.title': '¿Quién es el impostor?',
@@ -167,6 +169,8 @@ const translations = {
     'clues.turnOf': 'It\'s {name}\'s turn...',
     'clues.goToVoting': 'Go to voting',
     'clues.anotherRound': 'Another round',
+    'clues.waiting': 'Waiting for {host} to continue...',
+    'clues.skipped': 'Skipped',
 
     // Voting
     'voting.title': 'Who is the impostor?',
