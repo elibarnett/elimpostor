@@ -12,6 +12,7 @@ import VotingScreen from './screens/VotingScreen';
 import PlayingScreen from './screens/PlayingScreen';
 import ResultsScreen from './screens/ResultsScreen';
 import LeaveButton from './components/LeaveButton';
+import SpectatorBanner from './components/SpectatorBanner';
 
 function getInitialJoinCode(): string {
   const params = new URLSearchParams(window.location.search);
@@ -31,6 +32,8 @@ export default function App() {
   const game = useGameState(initialJoinCode ? 'join' : undefined);
   const [joinCode] = useState(initialJoinCode);
 
+  const isSpectator = game.gameState?.isSpectator ?? false;
+
   const renderScreen = () => {
     // If in a game, show the phase-appropriate screen
     if (game.screen === 'game' && game.gameState) {
@@ -42,6 +45,7 @@ export default function App() {
               gameState={gs}
               startGame={game.startGame}
               setMode={game.setMode}
+              convertToPlayer={game.convertToPlayer}
             />
           );
         case 'setup':
@@ -93,6 +97,7 @@ export default function App() {
           <JoinScreen
             setScreen={game.setScreen}
             joinGame={game.joinGame}
+            watchGame={game.watchGame}
             error={game.error}
             initialCode={joinCode}
           />
@@ -120,6 +125,13 @@ export default function App() {
           <div className="fixed top-0 left-0 right-0 z-50 bg-rose-600 text-white text-center text-sm py-2 px-4 animate-fade-in">
             {lang.t('connection.reconnecting')}
           </div>
+        )}
+        {/* Spectator banner */}
+        {game.screen === 'game' && isSpectator && (
+          <SpectatorBanner
+            canConvert={game.gameState?.phase === 'lobby'}
+            onConvert={game.convertToPlayer}
+          />
         )}
         {/* Leave button on all game screens */}
         {game.screen === 'game' && game.gameState && (

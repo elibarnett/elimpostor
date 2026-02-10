@@ -78,6 +78,14 @@ export function useGameState(initialScreen?: AppScreen) {
     emit('game:join', { code, playerName });
   }, [emit]);
 
+  const watchGame = useCallback((code: string, playerName: string) => {
+    emit('game:watch', { code, playerName });
+  }, [emit]);
+
+  const convertToPlayer = useCallback(() => {
+    emit('game:convertToPlayer');
+  }, [emit]);
+
   const setMode = useCallback((mode: GameMode) => {
     emit('game:setMode', { mode });
   }, [emit]);
@@ -150,6 +158,8 @@ export function useGameState(initialScreen?: AppScreen) {
     connected,
     createGame,
     joinGame,
+    watchGame,
+    convertToPlayer,
     setMode,
     startGame,
     setWord,

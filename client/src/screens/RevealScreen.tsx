@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Button from '../components/Button';
+import WaitingDots from '../components/WaitingDots';
 import { useLanguage } from '../hooks/useLanguage';
 import type { GameState } from '../types';
 
@@ -13,9 +14,36 @@ export default function RevealScreen({ gameState, markRoleReady }: RevealScreenP
   const [revealed, setRevealed] = useState(false);
 
   const me = gameState.players.find((p) => p.id === gameState.playerId);
-  const readyCount = gameState.players.filter((p) => p.hasSeenRole).length;
-  const totalCount = gameState.players.length;
+  const actualPlayers = gameState.players.filter((p) => !p.isSpectator);
+  const readyCount = actualPlayers.filter((p) => p.hasSeenRole).length;
+  const totalCount = actualPlayers.length;
   const allReady = readyCount === totalCount;
+
+  // Spectators see a waiting view with progress
+  if (gameState.isSpectator) {
+    return (
+      <div className="min-h-dvh flex flex-col items-center justify-center p-6 pt-12 animate-fade-in">
+        <div className="text-6xl mb-6">🃏</div>
+        <p className="text-slate-400 text-lg text-center mb-6">
+          {t('spectator.watching')}
+        </p>
+        <div className="w-full max-w-sm space-y-3">
+          <p className="text-center text-slate-400 text-sm">
+            {t('reveal.playersReady', { count: readyCount, total: totalCount })}
+          </p>
+          <div className="w-full h-2 bg-slate-800/60 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-violet-500 rounded-full transition-all duration-500"
+              style={{ width: `${totalCount > 0 ? (readyCount / totalCount) * 100 : 0}%` }}
+            />
+          </div>
+          <div className="flex justify-center mt-2">
+            <WaitingDots />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleTap = () => {
     setRevealed(!revealed);

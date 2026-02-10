@@ -20,7 +20,7 @@ export function registerHandlers(io: Server, gm: GameManager) {
       gm.clearTurnTimer(code);
       return;
     }
-    const activePlayers = game.players.filter((p: { isEliminated: boolean }) => !p.isEliminated);
+    const activePlayers = game.players.filter((p: { isEliminated: boolean; isSpectator: boolean }) => !p.isEliminated && !p.isSpectator);
     if (game.turnIndex >= activePlayers.length) {
       gm.clearTurnTimer(code);
       return;
@@ -85,6 +85,40 @@ export function registerHandlers(io: Server, gm: GameManager) {
         return;
       }
       socket.join(game.code);
+      broadcastState(game.code);
+    });
+
+    socket.on('game:watch', ({ code, playerName }: { code: string; playerName: string }) => {
+      if (!playerId) {
+        socket.emit('game:error', { message: 'not_authenticated' });
+        return;
+      }
+      if (!playerName?.trim()) {
+        socket.emit('game:error', { message: 'name_required' });
+        return;
+      }
+      if (!code?.trim()) {
+        socket.emit('game:error', { message: 'code_required' });
+        return;
+      }
+      const { game, error } = gm.addSpectator(code.toUpperCase(), playerId, socket.id, playerName.trim());
+      if (error || !game) {
+        socket.emit('game:error', { message: error });
+        return;
+      }
+      socket.join(game.code);
+      broadcastState(game.code);
+    });
+
+    socket.on('game:convertToPlayer', () => {
+      if (!playerId) return;
+      const game = gm.findGameByPlayerId(playerId);
+      if (!game) return;
+      const { error } = gm.convertToPlayer(playerId, game.code);
+      if (error) {
+        socket.emit('game:error', { message: error });
+        return;
+      }
       broadcastState(game.code);
     });
 

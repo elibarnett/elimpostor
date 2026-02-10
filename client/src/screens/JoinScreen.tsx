@@ -7,19 +7,28 @@ import type { AppScreen } from '../types';
 interface JoinScreenProps {
   setScreen: (screen: AppScreen) => void;
   joinGame: (code: string, name: string) => void;
+  watchGame: (code: string, name: string) => void;
   error: string | null;
   initialCode?: string;
 }
 
-export default function JoinScreen({ setScreen, joinGame, error, initialCode = '' }: JoinScreenProps) {
+export default function JoinScreen({ setScreen, joinGame, watchGame, error, initialCode = '' }: JoinScreenProps) {
   const { t } = useLanguage();
   const [code, setCode] = useState(initialCode);
   const [name, setName] = useState('');
 
+  const canSubmit = code.trim().length === 4 && !!name.trim();
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (code.trim().length === 4 && name.trim()) {
+    if (canSubmit) {
       joinGame(code.trim().toUpperCase(), name.trim());
+    }
+  };
+
+  const handleWatch = () => {
+    if (canSubmit) {
+      watchGame(code.trim().toUpperCase(), name.trim());
     }
   };
 
@@ -57,8 +66,11 @@ export default function JoinScreen({ setScreen, joinGame, error, initialCode = '
         {error && (
           <p className="text-rose-400 text-sm text-center">{t(`error.${error}` as any)}</p>
         )}
-        <Button type="submit" disabled={code.trim().length !== 4 || !name.trim()}>
+        <Button type="submit" disabled={!canSubmit}>
           {t('join.button')}
+        </Button>
+        <Button type="button" variant="secondary" disabled={!canSubmit} onClick={handleWatch}>
+          {t('join.watch')}
         </Button>
       </form>
     </div>

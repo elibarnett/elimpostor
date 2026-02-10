@@ -16,9 +16,11 @@ const translations = {
     'join.code': 'Código de sala',
     'join.name': 'Tu nombre',
     'join.button': 'Unirse',
+    'join.watch': 'Observar',
 
     // Lobby
     'lobby.players': 'jugadores',
+    'lobby.spectators': '{count} observando',
     'lobby.start': 'Comenzar',
     'lobby.waiting': 'Esperando a que {host} inicie la partida...',
     'lobby.minPlayers': 'Se necesitan al menos 3 jugadores',
@@ -79,6 +81,11 @@ const translations = {
     'results.pickHostHint': '¿Quién elige la siguiente palabra?',
     'results.confirm': 'Confirmar',
 
+    // Spectator
+    'spectator.banner': 'Estás observando',
+    'spectator.joinAsPlayer': 'Unirse como jugador',
+    'spectator.watching': 'Observando la partida...',
+
     // Connection
     'connection.reconnecting': 'Reconectando...',
 
@@ -120,9 +127,11 @@ const translations = {
     'join.code': 'Room code',
     'join.name': 'Your name',
     'join.button': 'Join',
+    'join.watch': 'Watch',
 
     // Lobby
     'lobby.players': 'players',
+    'lobby.spectators': '{count} watching',
     'lobby.start': 'Start',
     'lobby.waiting': 'Waiting for {host} to start the game...',
     'lobby.minPlayers': 'At least 3 players needed',
@@ -182,6 +191,11 @@ const translations = {
     'results.pickHost': 'Pick next host',
     'results.pickHostHint': 'Who picks the next word?',
     'results.confirm': 'Confirm',
+
+    // Spectator
+    'spectator.banner': 'You are spectating',
+    'spectator.joinAsPlayer': 'Join as player',
+    'spectator.watching': 'Watching the game...',
 
     // Connection
     'connection.reconnecting': 'Reconnecting...',

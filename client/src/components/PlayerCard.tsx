@@ -43,6 +43,11 @@ export default function PlayerCard({
               Host
             </span>
           )}
+          {player.isSpectator && (
+            <span className="text-xs bg-amber-600/30 text-amber-400 px-2 py-0.5 rounded-full">
+              Spectator
+            </span>
+          )}
           {!player.isConnected && (
             <span className="text-xs bg-rose-600/30 text-rose-400 px-2 py-0.5 rounded-full">
               ⚡ offline
