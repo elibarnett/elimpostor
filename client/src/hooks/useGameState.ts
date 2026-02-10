@@ -118,6 +118,10 @@ export function useGameState(initialScreen?: AppScreen) {
     emit('game:vote', { votedForId });
   }, [emit]);
 
+  const guessWord = useCallback((guess: string) => {
+    emit('game:guessWord', { guess });
+  }, [emit]);
+
   const revealImpostor = useCallback(() => {
     emit('game:revealImpostor');
   }, [emit]);
@@ -168,6 +172,7 @@ export function useGameState(initialScreen?: AppScreen) {
     nextRound,
     startVoting,
     vote,
+    guessWord,
     revealImpostor,
     transferHost,
     playAgain,

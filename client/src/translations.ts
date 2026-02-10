@@ -69,11 +69,22 @@ const translations = {
     'playing.reveal': 'Revelar impostor',
     'playing.waiting': 'Jugando en persona...',
 
+    // Impostor Guess
+    'guess.caught': '¡Te atraparon!',
+    'guess.lastChance': 'Tienes una última oportunidad. Adivina la palabra secreta.',
+    'guess.placeholder': 'Escribe tu respuesta...',
+    'guess.submit': 'Adivinar',
+    'guess.revealedImpostor': '🕵️ Impostor descubierto',
+    'guess.waiting': 'El impostor está adivinando la palabra...',
+
     // Results
     'results.impostorWas': 'El impostor era...',
     'results.wordWas': 'La palabra era:',
     'results.caught': '¡Lo atraparon! 🎉',
     'results.won': '¡El impostor ganó! 🕵️',
+    'results.guessCorrect': 'Adivinó la palabra: "{guess}" ✓',
+    'results.guessWrong': 'Respuesta incorrecta: "{guess}" ✗',
+    'results.guessTimeout': 'Se acabó el tiempo para adivinar',
     'results.playAgain': 'Jugar otra vez',
     'results.backHome': 'Volver al inicio',
     'results.votedFor': 'votó por',
@@ -180,11 +191,22 @@ const translations = {
     'playing.reveal': 'Reveal impostor',
     'playing.waiting': 'Playing in person...',
 
+    // Impostor Guess
+    'guess.caught': 'You\'ve been caught!',
+    'guess.lastChance': 'You have one last chance. Guess the secret word.',
+    'guess.placeholder': 'Type your answer...',
+    'guess.submit': 'Guess',
+    'guess.revealedImpostor': '🕵️ Impostor revealed',
+    'guess.waiting': 'The impostor is guessing the word...',
+
     // Results
     'results.impostorWas': 'The impostor was...',
     'results.wordWas': 'The word was:',
     'results.caught': 'Caught! 🎉',
     'results.won': 'The impostor wins! 🕵️',
+    'results.guessCorrect': 'Guessed the word: "{guess}" ✓',
+    'results.guessWrong': 'Wrong answer: "{guess}" ✗',
+    'results.guessTimeout': 'Ran out of time to guess',
     'results.playAgain': 'Play again',
     'results.backHome': 'Back to home',
     'results.votedFor': 'voted for',

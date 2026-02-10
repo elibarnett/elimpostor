@@ -15,6 +15,8 @@ const VOWELS = 'AEIOU';
 const DISCONNECT_GRACE_MS = 30_000; // 30 seconds
 // Time limit per clue turn in online mode
 const CLUE_TURN_MS = 30_000; // 30 seconds
+// Time limit for impostor's word guess
+const GUESS_TURN_MS = 15_000; // 15 seconds
 
 export class GameManager {
   private games: Map<string, Game> = new Map();
@@ -24,6 +26,8 @@ export class GameManager {
   private disconnectTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
   // Clue turn timers: game code -> timeout handle
   private turnTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
+  // Impostor guess timers: game code -> timeout handle
+  private guessTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
 
   generateCode(): string {
     let code: string;
@@ -67,6 +71,9 @@ export class GameManager {
       round: 1,
       turnIndex: 0,
       turnDeadline: null,
+      impostorGuess: null,
+      impostorGuessCorrect: null,
+      guessDeadline: null,
       settings: { language: 'es' },
     };
     this.games.set(code, game);
@@ -307,6 +314,7 @@ export class GameManager {
     // If impostor left during active game, end the game
     if (wasImpostor && game.phase !== 'lobby' && game.phase !== 'results') {
       this.clearTurnTimer(code);
+      this.clearGuessTimer(code);
       game.phase = 'results';
       return { game, gameEnded: true, code };
     }
@@ -315,6 +323,7 @@ export class GameManager {
     const actualPlayers = game.players.filter((p) => !p.isSpectator);
     if (actualPlayers.length < 3 && game.phase !== 'lobby' && game.phase !== 'results') {
       this.clearTurnTimer(code);
+      this.clearGuessTimer(code);
       game.phase = 'results';
       return { game, gameEnded: true, code };
     }
@@ -374,6 +383,9 @@ export class GameManager {
     game.round = 1;
     game.turnIndex = 0;
     game.turnDeadline = null;
+    game.impostorGuess = null;
+    game.impostorGuessCorrect = null;
+    game.guessDeadline = null;
 
     game.phase = 'reveal';
     return { game };
@@ -431,6 +443,9 @@ export class GameManager {
     game.votes = {};
     game.round = 1;
     game.turnIndex = 0;
+    game.impostorGuess = null;
+    game.impostorGuessCorrect = null;
+    game.guessDeadline = null;
     game.players.forEach((p) => {
       if (!p.isSpectator) {
         p.hasSeenRole = false;
@@ -507,9 +522,75 @@ export class GameManager {
     const allVoted = activePlayers.every((p) => game.votes[p.id]);
 
     if (allVoted) {
-      game.phase = 'results';
+      // Check if impostor was caught — if so, give them a last chance to guess
+      const voteCounts: Record<string, number> = {};
+      for (const v of Object.values(game.votes)) {
+        voteCounts[v] = (voteCounts[v] || 0) + 1;
+      }
+      const impostorVotes = voteCounts[game.impostorId ?? ''] ?? 0;
+      const maxVotes = Math.max(...Object.values(voteCounts), 0);
+      const impostorCaught = impostorVotes > 0 && impostorVotes >= maxVotes;
+
+      if (impostorCaught && game.mode === 'online') {
+        game.phase = 'impostor-guess';
+        game.impostorGuess = null;
+        game.impostorGuessCorrect = null;
+      } else {
+        game.phase = 'results';
+      }
     }
 
+    return { game };
+  }
+
+  /** Set a timer for the impostor guess phase. Calls onExpire when time runs out. */
+  setGuessTimer(code: string, onExpire: () => void): void {
+    this.clearGuessTimer(code);
+    const game = this.games.get(code);
+    if (!game) return;
+    game.guessDeadline = Date.now() + GUESS_TURN_MS;
+    const timer = setTimeout(() => {
+      this.guessTimers.delete(code);
+      onExpire();
+    }, GUESS_TURN_MS);
+    this.guessTimers.set(code, timer);
+  }
+
+  /** Clear any active guess timer for a game */
+  clearGuessTimer(code: string): void {
+    const timer = this.guessTimers.get(code);
+    if (timer) {
+      clearTimeout(timer);
+      this.guessTimers.delete(code);
+    }
+    const game = this.games.get(code);
+    if (game) game.guessDeadline = null;
+  }
+
+  /** Impostor submits a word guess */
+  guessWord(playerId: string, code: string, guess: string): { game?: Game; error?: string } {
+    const game = this.games.get(code);
+    if (!game) return { error: 'room_not_found' };
+    if (game.phase !== 'impostor-guess') return { error: 'wrong_phase' };
+    if (game.impostorId !== playerId) return { error: 'not_impostor' };
+
+    this.clearGuessTimer(code);
+    const normalizedGuess = guess.trim().toLowerCase();
+    const normalizedWord = (game.secretWord ?? '').trim().toLowerCase();
+    game.impostorGuess = guess.trim();
+    game.impostorGuessCorrect = normalizedGuess === normalizedWord;
+    game.phase = 'results';
+    return { game };
+  }
+
+  /** Impostor ran out of time — skip to results with no guess */
+  expireGuess(code: string): { game?: Game } {
+    const game = this.games.get(code);
+    if (!game || game.phase !== 'impostor-guess') return {};
+    game.guessDeadline = null;
+    game.impostorGuess = null;
+    game.impostorGuessCorrect = false;
+    game.phase = 'results';
     return { game };
   }
 
@@ -525,6 +606,9 @@ export class GameManager {
     game.round = 1;
     game.turnIndex = 0;
     game.turnDeadline = null;
+    game.impostorGuess = null;
+    game.impostorGuessCorrect = null;
+    game.guessDeadline = null;
     game.players.forEach((p) => {
       if (!p.isSpectator) {
         p.hasSeenRole = false;
@@ -538,6 +622,7 @@ export class GameManager {
 
   endGame(code: string): void {
     this.clearTurnTimer(code);
+    this.clearGuessTimer(code);
     const game = this.games.get(code);
     if (game) {
       // Clean up player-game mappings and timers
@@ -588,12 +673,16 @@ export class GameManager {
       secretWord: showSecretWord,
       isImpostor,
       isSpectator,
-      // Only reveal impostor during results
-      impostorId: game.phase === 'results' ? game.impostorId : null,
-      votes: game.phase === 'results' ? game.votes : this.getVoteProgress(game, playerId),
+      // Reveal impostor during impostor-guess and results
+      impostorId: (game.phase === 'results' || game.phase === 'impostor-guess') ? game.impostorId : null,
+      votes: (game.phase === 'results' || game.phase === 'impostor-guess') ? game.votes : this.getVoteProgress(game, playerId),
       round: game.round,
       turnIndex: game.turnIndex,
       turnDeadline: game.turnDeadline,
+      // Only show guess info during results
+      impostorGuess: game.phase === 'results' ? game.impostorGuess : null,
+      impostorGuessCorrect: game.phase === 'results' ? game.impostorGuessCorrect : null,
+      guessDeadline: game.guessDeadline,
       playerId,
       isHost,
       hostName: host?.name ?? '',
