@@ -43,6 +43,9 @@ export default function ResultsScreen({ gameState, playAgain, endGame, transferH
   // If impostor guessed correctly, they win despite being caught
   const impostorWins = !impostorCaught || guessedCorrectly;
 
+  // Elimination mode: impostor survived by attrition (not caught by vote)
+  const eliminationImpostorSurvived = gameState.settings.elimination && !impostorCaught && !hasGuessData;
+
   if (phase === 'suspense') {
     return (
       <div className="min-h-dvh flex flex-col items-center justify-center p-6 animate-fade-in">
@@ -134,7 +137,9 @@ export default function ResultsScreen({ gameState, playAgain, endGame, transferH
                 impostorWins ? 'text-rose-400' : 'text-emerald-400'
               }`}
             >
-              {impostorWins ? t('results.won') : t('results.caught')}
+              {eliminationImpostorSurvived
+                ? t('elimination.impostorSurvived')
+                : impostorWins ? t('results.won') : t('results.caught')}
             </div>
             {/* Show guess info if the impostor had a guess phase */}
             {hasGuessData && (
@@ -186,6 +191,32 @@ export default function ResultsScreen({ gameState, playAgain, endGame, transferH
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* Elimination history (elimination mode only) */}
+        {gameState.settings.elimination && gameState.eliminationHistory.length > 0 && (
+          <div className="w-full max-w-sm mb-6">
+            <p className="text-slate-400 text-xs text-center mb-2 uppercase tracking-wide">
+              {t('elimination.history')}
+            </p>
+            <div className="space-y-1">
+              {gameState.eliminationHistory.map((entry, i) => {
+                const player = gameState.players.find((p) => p.id === entry.playerId);
+                return (
+                  <div key={i} className="flex items-center gap-2 text-sm bg-slate-800/50 rounded-lg px-3 py-1.5">
+                    <span className="text-slate-500">{t('clues.round', { n: entry.round })}</span>
+                    <div
+                      className="w-6 h-6 rounded-full flex items-center justify-center text-xs"
+                      style={{ backgroundColor: player?.color + '33' }}
+                    >
+                      {player?.avatar}
+                    </div>
+                    <span className="text-slate-400 line-through">{entry.playerName}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>

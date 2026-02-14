@@ -26,7 +26,8 @@ export default function CluesScreen({
 
   const activePlayers = gameState.players.filter((p) => !p.isEliminated && !p.isSpectator);
   const currentPlayer = activePlayers[gameState.turnIndex];
-  const isMyTurn = !gameState.isSpectator && currentPlayer?.id === gameState.playerId;
+  const meEliminated = gameState.players.find((p) => p.id === gameState.playerId)?.isEliminated;
+  const isMyTurn = !gameState.isSpectator && !meEliminated && currentPlayer?.id === gameState.playerId;
   const allDone = gameState.turnIndex >= activePlayers.length;
 
   // Countdown timer based on server turnDeadline
@@ -63,6 +64,12 @@ export default function CluesScreen({
       <h2 className="text-xl font-bold text-white text-center mb-4">
         {t('clues.round', { n: gameState.round })}
       </h2>
+
+      {meEliminated && (
+        <p className="text-center text-slate-500 text-sm mb-2">
+          {t('elimination.youAreEliminated')}
+        </p>
+      )}
 
       {/* Turn order */}
       <div className="flex gap-2 overflow-x-auto pb-3 mb-4 scrollbar-hide">

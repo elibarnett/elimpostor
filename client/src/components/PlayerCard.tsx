@@ -27,7 +27,7 @@ export default function PlayerCard({
           : 'border-slate-700/60'
       } ${onClick && !disabled ? 'cursor-pointer active:scale-[0.97]' : ''} ${
         disabled ? 'opacity-50' : ''
-      }`}
+      } ${player.isEliminated ? 'opacity-40 grayscale' : ''}`}
     >
       <div
         className="w-11 h-11 rounded-full flex items-center justify-center text-xl shrink-0"
@@ -36,7 +36,9 @@ export default function PlayerCard({
         {player.avatar}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="font-semibold text-white truncate flex items-center gap-2">
+        <div className={`font-semibold truncate flex items-center gap-2 ${
+          player.isEliminated ? 'text-slate-500 line-through' : 'text-white'
+        }`}>
           {player.name}
           {player.isHost && (
             <span className="text-xs bg-violet-600/30 text-violet-400 px-2 py-0.5 rounded-full">
@@ -46,6 +48,11 @@ export default function PlayerCard({
           {player.isSpectator && (
             <span className="text-xs bg-amber-600/30 text-amber-400 px-2 py-0.5 rounded-full">
               Spectator
+            </span>
+          )}
+          {player.isEliminated && (
+            <span className="text-xs bg-slate-600/30 text-slate-400 px-2 py-0.5 rounded-full">
+              ✗
             </span>
           )}
           {!player.isConnected && (

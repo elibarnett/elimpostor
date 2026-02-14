@@ -6,6 +6,7 @@ export type GamePhase =
   | 'voting'
   | 'playing'
   | 'impostor-guess'
+  | 'elimination-results'
   | 'results';
 
 export type GameMode = 'online' | 'local';
@@ -41,7 +42,10 @@ export interface Game {
   guessDeadline: number | null;
   settings: {
     language: 'es' | 'en';
+    elimination: boolean;
   };
+  eliminationHistory: Array<{ round: number; playerId: string }>;
+  lastEliminatedId: string | null;
 }
 
 export interface PersonalizedGameState {
@@ -77,5 +81,8 @@ export interface PersonalizedGameState {
   hostName: string;
   settings: {
     language: 'es' | 'en';
+    elimination: boolean;
   };
+  eliminationHistory: Array<{ round: number; playerName: string; playerId: string }>;
+  lastEliminatedId: string | null;
 }

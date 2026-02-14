@@ -90,6 +90,14 @@ export function useGameState(initialScreen?: AppScreen) {
     emit('game:setMode', { mode });
   }, [emit]);
 
+  const setElimination = useCallback((enabled: boolean) => {
+    emit('game:setElimination', { enabled });
+  }, [emit]);
+
+  const continueAfterElimination = useCallback(() => {
+    emit('game:continueAfterElimination');
+  }, [emit]);
+
   const startGame = useCallback(() => {
     emit('game:start');
   }, [emit]);
@@ -165,6 +173,8 @@ export function useGameState(initialScreen?: AppScreen) {
     watchGame,
     convertToPlayer,
     setMode,
+    setElimination,
+    continueAfterElimination,
     startGame,
     setWord,
     markRoleReady,

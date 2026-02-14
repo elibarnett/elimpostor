@@ -30,6 +30,9 @@ const translations = {
     'lobby.mode': 'Modo de juego',
     'lobby.modeOnline': 'Online',
     'lobby.modeLocal': 'Presencial',
+    'lobby.variant': 'Variante',
+    'lobby.variantClassic': 'Clásico',
+    'lobby.variantElimination': 'Eliminación',
 
     // Setup
     'setup.title': '¿Cuál es la palabra secreta?',
@@ -92,6 +95,19 @@ const translations = {
     'results.pickHostHint': '¿Quién elige la siguiente palabra?',
     'results.confirm': 'Confirmar',
 
+    // Elimination
+    'elimination.eliminated': '¡{name} ha sido eliminado!',
+    'elimination.tied': 'Empate. Nadie fue eliminado.',
+    'elimination.remaining': '{count} jugadores restantes',
+    'elimination.continue': 'Continuar',
+    'elimination.waitingContinue': 'Esperando a que {host} continúe...',
+    'elimination.history': 'Historial de eliminaciones',
+    'elimination.impostorSurvived': '¡El impostor sobrevivió! Quedan muy pocos jugadores.',
+    'elimination.youAreEliminated': 'Has sido eliminado. Observando...',
+    'elimination.banner': 'Eliminado',
+    'elimination.noElimination': 'Empate',
+    'elimination.votes': '{count} votos',
+
     // Spectator
     'spectator.banner': 'Estás observando',
     'spectator.joinAsPlayer': 'Unirse como jugador',
@@ -152,6 +168,9 @@ const translations = {
     'lobby.mode': 'Game mode',
     'lobby.modeOnline': 'Online',
     'lobby.modeLocal': 'In Person',
+    'lobby.variant': 'Variant',
+    'lobby.variantClassic': 'Classic',
+    'lobby.variantElimination': 'Elimination',
 
     // Setup
     'setup.title': 'What\'s the secret word?',
@@ -213,6 +232,19 @@ const translations = {
     'results.pickHost': 'Pick next host',
     'results.pickHostHint': 'Who picks the next word?',
     'results.confirm': 'Confirm',
+
+    // Elimination
+    'elimination.eliminated': '{name} has been eliminated!',
+    'elimination.tied': 'Tied vote. No one was eliminated.',
+    'elimination.remaining': '{count} players remaining',
+    'elimination.continue': 'Continue',
+    'elimination.waitingContinue': 'Waiting for {host} to continue...',
+    'elimination.history': 'Elimination history',
+    'elimination.impostorSurvived': 'The impostor survived! Too few players remain.',
+    'elimination.youAreEliminated': 'You have been eliminated. Watching...',
+    'elimination.banner': 'Eliminated',
+    'elimination.noElimination': 'Tied',
+    'elimination.votes': '{count} votes',
 
     // Spectator
     'spectator.banner': 'You are spectating',
