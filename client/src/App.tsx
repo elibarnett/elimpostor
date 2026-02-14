@@ -11,6 +11,7 @@ import CluesScreen from './screens/CluesScreen';
 import VotingScreen from './screens/VotingScreen';
 import PlayingScreen from './screens/PlayingScreen';
 import ImpostorGuessScreen from './screens/ImpostorGuessScreen';
+import EliminationResultsScreen from './screens/EliminationResultsScreen';
 import ResultsScreen from './screens/ResultsScreen';
 import LeaveButton from './components/LeaveButton';
 import SpectatorBanner from './components/SpectatorBanner';
@@ -34,6 +35,7 @@ export default function App() {
   const [joinCode] = useState(initialJoinCode);
 
   const isSpectator = game.gameState?.isSpectator ?? false;
+  const isEliminated = game.gameState?.players.find((p) => p.id === game.gameState?.playerId)?.isEliminated ?? false;
 
   const renderScreen = () => {
     // If in a game, show the phase-appropriate screen
@@ -46,6 +48,7 @@ export default function App() {
               gameState={gs}
               startGame={game.startGame}
               setMode={game.setMode}
+              setElimination={game.setElimination}
               convertToPlayer={game.convertToPlayer}
             />
           );
@@ -76,6 +79,13 @@ export default function App() {
             <ImpostorGuessScreen
               gameState={gs}
               guessWord={game.guessWord}
+            />
+          );
+        case 'elimination-results':
+          return (
+            <EliminationResultsScreen
+              gameState={gs}
+              continueAfterElimination={game.continueAfterElimination}
             />
           );
         case 'results':
@@ -134,11 +144,12 @@ export default function App() {
             {lang.t('connection.reconnecting')}
           </div>
         )}
-        {/* Spectator banner */}
-        {game.screen === 'game' && isSpectator && (
+        {/* Spectator / eliminated banner */}
+        {game.screen === 'game' && (isSpectator || isEliminated) && (
           <SpectatorBanner
             canConvert={game.gameState?.phase === 'lobby'}
             onConvert={game.convertToPlayer}
+            isEliminated={isEliminated}
           />
         )}
         {/* Leave button on all game screens */}

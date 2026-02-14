@@ -9,10 +9,11 @@ interface LobbyScreenProps {
   gameState: GameState;
   startGame: () => void;
   setMode: (mode: GameMode) => void;
+  setElimination: (enabled: boolean) => void;
   convertToPlayer: () => void;
 }
 
-export default function LobbyScreen({ gameState, startGame, setMode, convertToPlayer }: LobbyScreenProps) {
+export default function LobbyScreen({ gameState, startGame, setMode, setElimination, convertToPlayer }: LobbyScreenProps) {
   const { t } = useLanguage();
   const actualPlayers = gameState.players.filter((p) => !p.isSpectator);
   const canStart = actualPlayers.length >= 3;
@@ -74,6 +75,43 @@ export default function LobbyScreen({ gameState, startGame, setMode, convertToPl
             </div>
           )}
         </div>
+
+        {/* Elimination toggle — only in online mode */}
+        {gameState.mode === 'online' && (
+          <div className="mb-4">
+            <p className="text-slate-400 text-xs text-center mb-2 uppercase tracking-wide">
+              {t('lobby.variant')}
+            </p>
+            {gameState.isHost ? (
+              <div className="flex max-w-sm mx-auto bg-slate-800/60 backdrop-blur-sm rounded-xl p-1 gap-1">
+                <button
+                  onClick={() => setElimination(false)}
+                  className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
+                    !gameState.settings.elimination
+                      ? 'bg-violet-600 text-white'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  {t('lobby.variantClassic')}
+                </button>
+                <button
+                  onClick={() => setElimination(true)}
+                  className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
+                    gameState.settings.elimination
+                      ? 'bg-violet-600 text-white'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  {t('lobby.variantElimination')}
+                </button>
+              </div>
+            ) : (
+              <div className="text-center text-sm text-slate-300">
+                {gameState.settings.elimination ? t('lobby.variantElimination') : t('lobby.variantClassic')}
+              </div>
+            )}
+          </div>
+        )}
 
         {gameState.isSpectator ? (
           <div className="space-y-2">

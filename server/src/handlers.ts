@@ -142,6 +142,31 @@ export function registerHandlers(io: Server, gm: GameManager) {
       broadcastState(game.code);
     });
 
+    socket.on('game:setElimination', ({ enabled }: { enabled: boolean }) => {
+      if (!playerId) return;
+      const game = gm.findGameByPlayerId(playerId);
+      if (!game) return;
+      const { error } = gm.setElimination(playerId, game.code, enabled);
+      if (error) {
+        socket.emit('game:error', { message: error });
+        return;
+      }
+      broadcastState(game.code);
+    });
+
+    socket.on('game:continueAfterElimination', () => {
+      if (!playerId) return;
+      const game = gm.findGameByPlayerId(playerId);
+      if (!game) return;
+      const { error } = gm.continueAfterElimination(playerId, game.code);
+      if (error) {
+        socket.emit('game:error', { message: error });
+        return;
+      }
+      startTurnTimerIfNeeded(game.code);
+      broadcastState(game.code);
+    });
+
     socket.on('game:start', () => {
       if (!playerId) return;
       const game = gm.findGameByPlayerId(playerId);

@@ -27,8 +27,10 @@ export default function VotingScreen({ gameState, vote }: VotingScreenProps) {
     }
   };
 
-  // Spectators see vote progress without ability to vote
-  if (gameState.isSpectator) {
+  const meEliminated = gameState.players.find((p) => p.id === gameState.playerId)?.isEliminated;
+
+  // Spectators and eliminated players see vote progress without ability to vote
+  if (gameState.isSpectator || meEliminated) {
     return (
       <div className="min-h-dvh flex flex-col p-6 pt-12 animate-fade-in">
         <h2 className="text-2xl font-bold text-white text-center mb-6">
