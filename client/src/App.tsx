@@ -129,12 +129,9 @@ export default function App() {
 
   const isHome = game.screen === 'home';
 
-  // Pick a random background image once per mount (session)
-  const BACKGROUNDS = [
-    '/art/bg-1.jpg',
-    '/art/bg-2.jpg',
-    '/art/bg-3.jpg',
-  ];
+  // Auto-discover all bg-*.jpg at build time — just drop new files in src/assets/backgrounds/
+  const bgModules = import.meta.glob('./assets/backgrounds/bg-*.jpg', { eager: true, query: '?url', import: 'default' });
+  const BACKGROUNDS = Object.values(bgModules) as string[];
   const randomBg = useMemo(
     () => BACKGROUNDS[Math.floor(Math.random() * BACKGROUNDS.length)],
     [],
