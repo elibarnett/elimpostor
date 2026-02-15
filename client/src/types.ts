@@ -11,6 +11,15 @@ export type GamePhase =
 
 export type GameMode = 'online' | 'local';
 
+export interface GameSettings {
+  language: 'es' | 'en';
+  elimination: boolean;
+  clueTimer: 15 | 30 | 45 | 60 | 0; // seconds; 0 = unlimited
+  votingStyle: 'anonymous' | 'public';
+  maxRounds: 1 | 2 | 3;
+  allowSkip: boolean;
+}
+
 export interface PlayerView {
   id: string;
   name: string;
@@ -44,10 +53,7 @@ export interface GameState {
   playerId: string;
   isHost: boolean;
   hostName: string;
-  settings: {
-    language: 'es' | 'en';
-    elimination: boolean;
-  };
+  settings: GameSettings;
   eliminationHistory: Array<{ round: number; playerName: string; playerId: string }>;
   lastEliminatedId: string | null;
 }

@@ -11,6 +11,15 @@ export type GamePhase =
 
 export type GameMode = 'online' | 'local';
 
+export interface GameSettings {
+  language: 'es' | 'en';
+  elimination: boolean;
+  clueTimer: 15 | 30 | 45 | 60 | 0; // seconds; 0 = unlimited
+  votingStyle: 'anonymous' | 'public';
+  maxRounds: 1 | 2 | 3;
+  allowSkip: boolean;
+}
+
 export interface Player {
   id: string; // persistent playerId (not socket.id)
   socketId: string | null; // current socket connection (null = disconnected)
@@ -40,10 +49,7 @@ export interface Game {
   impostorGuess: string | null;
   impostorGuessCorrect: boolean | null;
   guessDeadline: number | null;
-  settings: {
-    language: 'es' | 'en';
-    elimination: boolean;
-  };
+  settings: GameSettings;
   eliminationHistory: Array<{ round: number; playerId: string }>;
   lastEliminatedId: string | null;
 }
@@ -79,10 +85,7 @@ export interface PersonalizedGameState {
   playerId: string;
   isHost: boolean;
   hostName: string;
-  settings: {
-    language: 'es' | 'en';
-    elimination: boolean;
-  };
+  settings: GameSettings;
   eliminationHistory: Array<{ round: number; playerName: string; playerId: string }>;
   lastEliminatedId: string | null;
 }

@@ -49,6 +49,7 @@ export default function App() {
               startGame={game.startGame}
               setMode={game.setMode}
               setElimination={game.setElimination}
+              updateSettings={game.updateSettings}
               convertToPlayer={game.convertToPlayer}
             />
           );
@@ -63,6 +64,7 @@ export default function App() {
               submitClue={game.submitClue}
               nextRound={game.nextRound}
               startVoting={game.startVoting}
+              skipMyTurn={game.skipMyTurn}
             />
           );
         case 'voting':

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
-import type { GameState, GameMode, AppScreen } from '../types';
+import type { GameState, GameMode, GameSettings, AppScreen } from '../types';
 
 const SOCKET_URL = import.meta.env.DEV ? 'http://localhost:3001' : '';
 
@@ -94,6 +94,14 @@ export function useGameState(initialScreen?: AppScreen) {
     emit('game:setElimination', { enabled });
   }, [emit]);
 
+  const updateSettings = useCallback((settings: Partial<GameSettings>) => {
+    emit('game:updateSettings', { settings });
+  }, [emit]);
+
+  const skipMyTurn = useCallback(() => {
+    emit('game:skipMyTurn');
+  }, [emit]);
+
   const continueAfterElimination = useCallback(() => {
     emit('game:continueAfterElimination');
   }, [emit]);
@@ -174,6 +182,8 @@ export function useGameState(initialScreen?: AppScreen) {
     convertToPlayer,
     setMode,
     setElimination,
+    updateSettings,
+    skipMyTurn,
     continueAfterElimination,
     startGame,
     setWord,
