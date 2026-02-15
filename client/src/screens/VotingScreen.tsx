@@ -29,6 +29,17 @@ export default function VotingScreen({ gameState, vote }: VotingScreenProps) {
 
   const meEliminated = gameState.players.find((p) => p.id === gameState.playerId)?.isEliminated;
 
+  // Compute vote tallies for public voting
+  const isPublicVoting = gameState.settings.votingStyle === 'public';
+  const voteTallies: Record<string, number> = {};
+  if (isPublicVoting) {
+    for (const targetId of Object.values(gameState.votes)) {
+      if (targetId && targetId !== '__voted__') {
+        voteTallies[targetId] = (voteTallies[targetId] || 0) + 1;
+      }
+    }
+  }
+
   // Spectators and eliminated players see vote progress without ability to vote
   if (gameState.isSpectator || meEliminated) {
     return (
@@ -38,27 +49,35 @@ export default function VotingScreen({ gameState, vote }: VotingScreenProps) {
         </h2>
 
         <div className="flex-1 grid grid-cols-2 gap-3 content-start mb-4">
-          {activePlayers.map((player) => (
-            <div
-              key={player.id}
-              className="rounded-2xl p-4 border-2 border-slate-700/60 bg-slate-800/60 flex flex-col items-center gap-2 backdrop-blur-sm"
-            >
+          {activePlayers.map((player) => {
+            const voteCount = isPublicVoting ? (voteTallies[player.id] || 0) : 0;
+            return (
               <div
-                className="w-14 h-14 rounded-full flex items-center justify-center text-2xl"
-                style={{ backgroundColor: player.color + '33' }}
+                key={player.id}
+                className="rounded-2xl p-4 border-2 border-slate-700/60 bg-slate-800/60 flex flex-col items-center gap-2 backdrop-blur-sm"
               >
-                {player.avatar}
-              </div>
-              <span className="font-medium text-white text-sm truncate w-full text-center">
-                {player.name}
-              </span>
-              {player.clue && (
-                <span className="text-slate-400 text-xs truncate w-full text-center">
-                  "{player.clue}"
+                <div
+                  className="w-14 h-14 rounded-full flex items-center justify-center text-2xl"
+                  style={{ backgroundColor: player.color + '33' }}
+                >
+                  {player.avatar}
+                </div>
+                <span className="font-medium text-white text-sm truncate w-full text-center">
+                  {player.name}
                 </span>
-              )}
-            </div>
-          ))}
+                {player.clue && (
+                  <span className="text-slate-400 text-xs truncate w-full text-center">
+                    "{player.clue}"
+                  </span>
+                )}
+                {isPublicVoting && voteCount > 0 && (
+                  <span className="text-rose-400 text-xs font-semibold">
+                    {t('voting.votesCount', { count: voteCount })}
+                  </span>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         <div className="pb-safe">
@@ -74,6 +93,53 @@ export default function VotingScreen({ gameState, vote }: VotingScreenProps) {
   }
 
   if (hasVoted) {
+    // Public voting: show live tallies instead of just "Waiting..."
+    if (isPublicVoting) {
+      return (
+        <div className="min-h-dvh flex flex-col p-6 animate-fade-in">
+          <h2 className="text-2xl font-bold text-white text-center mb-6">
+            {t('voting.title')}
+          </h2>
+
+          <div className="flex-1 grid grid-cols-2 gap-3 content-start mb-4">
+            {activePlayers.map((player) => {
+              const voteCount = voteTallies[player.id] || 0;
+              return (
+                <div
+                  key={player.id}
+                  className="rounded-2xl p-4 border-2 border-slate-700/60 bg-slate-800/60 flex flex-col items-center gap-2 backdrop-blur-sm"
+                >
+                  <div
+                    className="w-14 h-14 rounded-full flex items-center justify-center text-2xl"
+                    style={{ backgroundColor: player.color + '33' }}
+                  >
+                    {player.avatar}
+                  </div>
+                  <span className="font-medium text-white text-sm truncate w-full text-center">
+                    {player.name}
+                  </span>
+                  {voteCount > 0 && (
+                    <span className="text-rose-400 text-xs font-semibold">
+                      {t('voting.votesCount', { count: voteCount })}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="pb-safe">
+            <p className="text-center text-slate-500 text-sm mb-2">
+              {t('voting.voted', { count: votedCount, total: totalCount })}
+            </p>
+            <div className="flex justify-center">
+              <WaitingDots />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-dvh flex flex-col items-center justify-center p-6 animate-fade-in">
         <p className="text-slate-400 text-lg mb-4">{t('voting.waiting')}</p>

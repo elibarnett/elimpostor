@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { LanguageContext, useLanguageProvider } from './hooks/useLanguage';
 import { useGameState } from './hooks/useGameState';
 import HomeScreen from './screens/HomeScreen';
@@ -49,6 +49,7 @@ export default function App() {
               startGame={game.startGame}
               setMode={game.setMode}
               setElimination={game.setElimination}
+              updateSettings={game.updateSettings}
               convertToPlayer={game.convertToPlayer}
             />
           );
@@ -63,6 +64,7 @@ export default function App() {
               submitClue={game.submitClue}
               nextRound={game.nextRound}
               startVoting={game.startVoting}
+              skipMyTurn={game.skipMyTurn}
             />
           );
         case 'voting':
@@ -127,13 +129,24 @@ export default function App() {
 
   const isHome = game.screen === 'home';
 
+  // Pick a random background image once per mount (session)
+  const BACKGROUNDS = [
+    '/art/bg-1.jpg',
+    '/art/bg-2.jpg',
+    '/art/bg-3.jpg',
+  ];
+  const randomBg = useMemo(
+    () => BACKGROUNDS[Math.floor(Math.random() * BACKGROUNDS.length)],
+    [],
+  );
+
   return (
     <LanguageContext.Provider value={lang}>
-      {/* Global background image */}
+      {/* Global background image — randomized per session */}
       <div
         className="fixed inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: 'url(/art/home-bg.jpg)',
+          backgroundImage: `url(${randomBg})`,
           backgroundColor: '#0f0a1a',
         }}
       />

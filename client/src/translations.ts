@@ -108,6 +108,25 @@ const translations = {
     'elimination.noElimination': 'Empate',
     'elimination.votes': '{count} votos',
 
+    // Settings
+    'settings.title': 'Ajustes',
+    'settings.clueTimer': 'Tiempo por pista',
+    'settings.clueTimerUnlimited': '∞',
+    'settings.votingStyle': 'Votación',
+    'settings.votingAnonymous': 'Anónima',
+    'settings.votingPublic': 'Pública',
+    'settings.maxRounds': 'Rondas de pistas',
+    'settings.allowSkip': 'Pasar turno',
+    'settings.on': 'Sí',
+    'settings.off': 'No',
+    'settings.presetClassic': 'Clásico',
+    'settings.presetExtended': 'Extendido',
+    'clues.roundOf': 'Ronda {n} de {total}',
+    'clues.skip': 'Pasar',
+    'voting.votesCount': '{count} votos',
+    'error.invalid_setting': 'Ajuste no válido',
+    'error.skip_not_allowed': 'No se permite pasar turno',
+
     // Spectator
     'spectator.banner': 'Estás observando',
     'spectator.joinAsPlayer': 'Unirse como jugador',
@@ -245,6 +264,25 @@ const translations = {
     'elimination.banner': 'Eliminated',
     'elimination.noElimination': 'Tied',
     'elimination.votes': '{count} votes',
+
+    // Settings
+    'settings.title': 'Settings',
+    'settings.clueTimer': 'Clue timer',
+    'settings.clueTimerUnlimited': '∞',
+    'settings.votingStyle': 'Voting',
+    'settings.votingAnonymous': 'Anonymous',
+    'settings.votingPublic': 'Public',
+    'settings.maxRounds': 'Clue rounds',
+    'settings.allowSkip': 'Allow skip',
+    'settings.on': 'On',
+    'settings.off': 'Off',
+    'settings.presetClassic': 'Classic',
+    'settings.presetExtended': 'Extended',
+    'clues.roundOf': 'Round {n} of {total}',
+    'clues.skip': 'Skip',
+    'voting.votesCount': '{count} votes',
+    'error.invalid_setting': 'Invalid setting',
+    'error.skip_not_allowed': 'Skipping is not allowed',
 
     // Spectator
     'spectator.banner': 'You are spectating',

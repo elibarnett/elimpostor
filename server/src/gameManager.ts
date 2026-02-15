@@ -1,4 +1,4 @@
-import type { Game, GameMode, Player, PersonalizedGameState, GamePhase } from './types.js';
+import type { Game, GameMode, GameSettings, Player, PersonalizedGameState, GamePhase } from './types.js';
 
 const AVATARS = ['🦊', '🐸', '🦁', '🐼', '🐙', '🦄', '🐲', '🦜', '🐺', '🦈', '🎃', '🤖', '🛸', '🌵', '🍄'];
 const COLORS = [
@@ -13,10 +13,17 @@ const VOWELS = 'AEIOU';
 
 // Grace period before actually removing a disconnected player
 const DISCONNECT_GRACE_MS = 30_000; // 30 seconds
-// Time limit per clue turn in online mode
-const CLUE_TURN_MS = 30_000; // 30 seconds
 // Time limit for impostor's word guess
 const GUESS_TURN_MS = 15_000; // 15 seconds
+
+const DEFAULT_SETTINGS: GameSettings = {
+  language: 'es',
+  elimination: false,
+  clueTimer: 30,
+  votingStyle: 'anonymous',
+  maxRounds: 1,
+  allowSkip: true,
+};
 
 export class GameManager {
   private games: Map<string, Game> = new Map();
@@ -74,7 +81,7 @@ export class GameManager {
       impostorGuess: null,
       impostorGuessCorrect: null,
       guessDeadline: null,
-      settings: { language: 'es', elimination: false },
+      settings: { ...DEFAULT_SETTINGS },
       eliminationHistory: [],
       lastEliminatedId: null,
     };
@@ -104,6 +111,43 @@ export class GameManager {
     if (game.phase !== 'lobby') return { error: 'wrong_phase' };
 
     game.settings.elimination = enabled;
+    return { game };
+  }
+
+  updateSettings(playerId: string, code: string, partial: Partial<GameSettings>): { game?: Game; error?: string } {
+    const game = this.games.get(code);
+    if (!game) return { error: 'room_not_found' };
+    if (game.hostId !== playerId) return { error: 'not_host' };
+    if (game.phase !== 'lobby') return { error: 'wrong_phase' };
+
+    // Validate each provided field
+    if (partial.clueTimer !== undefined) {
+      if (![0, 15, 30, 45, 60].includes(partial.clueTimer)) return { error: 'invalid_setting' };
+    }
+    if (partial.votingStyle !== undefined) {
+      if (!['anonymous', 'public'].includes(partial.votingStyle)) return { error: 'invalid_setting' };
+    }
+    if (partial.maxRounds !== undefined) {
+      if (![1, 2, 3].includes(partial.maxRounds)) return { error: 'invalid_setting' };
+    }
+    if (partial.allowSkip !== undefined) {
+      if (typeof partial.allowSkip !== 'boolean') return { error: 'invalid_setting' };
+    }
+    if (partial.elimination !== undefined) {
+      if (typeof partial.elimination !== 'boolean') return { error: 'invalid_setting' };
+    }
+    if (partial.language !== undefined) {
+      if (!['es', 'en'].includes(partial.language)) return { error: 'invalid_setting' };
+    }
+
+    // Only merge known keys
+    const allowed: (keyof GameSettings)[] = ['language', 'elimination', 'clueTimer', 'votingStyle', 'maxRounds', 'allowSkip'];
+    for (const key of allowed) {
+      if (key in partial) {
+        (game.settings as unknown as Record<string, unknown>)[key] = partial[key];
+      }
+    }
+
     return { game };
   }
 
@@ -239,11 +283,18 @@ export class GameManager {
     this.clearTurnTimer(code);
     const game = this.games.get(code);
     if (!game) return;
-    game.turnDeadline = Date.now() + CLUE_TURN_MS;
+
+    const timerMs = game.settings.clueTimer * 1000;
+    if (timerMs === 0) {
+      // Unlimited: no timer, no deadline
+      return;
+    }
+
+    game.turnDeadline = Date.now() + timerMs;
     const timer = setTimeout(() => {
       this.turnTimers.delete(code);
       onExpire();
-    }, CLUE_TURN_MS);
+    }, timerMs);
     this.turnTimers.set(code, timer);
   }
 
@@ -521,6 +572,29 @@ export class GameManager {
     return { game };
   }
 
+  /** Auto-advance to next round (server-internal, no host check) */
+  autoNextRound(code: string): { game?: Game } {
+    const game = this.games.get(code);
+    if (!game) return {};
+    game.round++;
+    game.turnIndex = 0;
+    game.turnDeadline = null;
+    game.players.forEach((p) => {
+      if (!p.isEliminated && !p.isSpectator) p.clue = null;
+    });
+    return { game };
+  }
+
+  /** Auto-start voting (server-internal, no host check) */
+  autoStartVoting(code: string): { game?: Game } {
+    const game = this.games.get(code);
+    if (!game) return {};
+    this.clearTurnTimer(code);
+    game.phase = 'voting';
+    game.votes = {};
+    return { game };
+  }
+
   vote(playerId: string, code: string, votedForId: string): { game?: Game; error?: string } {
     const game = this.games.get(code);
     if (!game) return { error: 'room_not_found' };
@@ -764,7 +838,11 @@ export class GameManager {
       isSpectator,
       // Reveal impostor during impostor-guess and results
       impostorId: (game.phase === 'results' || game.phase === 'impostor-guess') ? game.impostorId : null,
-      votes: (game.phase === 'results' || game.phase === 'impostor-guess' || game.phase === 'elimination-results') ? game.votes : this.getVoteProgress(game, playerId),
+      votes: (game.phase === 'results' || game.phase === 'impostor-guess' || game.phase === 'elimination-results')
+        ? game.votes
+        : (game.phase === 'voting' && game.settings.votingStyle === 'public')
+          ? game.votes
+          : this.getVoteProgress(game, playerId),
       round: game.round,
       turnIndex: game.turnIndex,
       turnDeadline: game.turnDeadline,

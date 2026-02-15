@@ -4,13 +4,12 @@ import Input from '../components/Input';
 import { useLanguage } from '../hooks/useLanguage';
 import type { GameState } from '../types';
 
-const TURN_DURATION = 30; // seconds — must match server CLUE_TURN_MS
-
 interface CluesScreenProps {
   gameState: GameState;
   submitClue: (clue: string) => void;
   nextRound: () => void;
   startVoting: () => void;
+  skipMyTurn: () => void;
 }
 
 export default function CluesScreen({
@@ -18,6 +17,7 @@ export default function CluesScreen({
   submitClue,
   nextRound,
   startVoting,
+  skipMyTurn,
 }: CluesScreenProps) {
   const { t } = useLanguage();
   const [clue, setClue] = useState('');
@@ -62,7 +62,9 @@ export default function CluesScreen({
   return (
     <div className="min-h-dvh flex flex-col p-6 animate-fade-in">
       <h2 className="text-xl font-bold text-white text-center mb-4">
-        {t('clues.round', { n: gameState.round })}
+        {gameState.settings.maxRounds > 1
+          ? t('clues.roundOf', { n: gameState.round, total: gameState.settings.maxRounds })
+          : t('clues.round', { n: gameState.round })}
       </h2>
 
       {meEliminated && (
@@ -113,7 +115,7 @@ export default function CluesScreen({
                     strokeWidth="3" strokeLinecap="round"
                     stroke={secondsLeft > 10 ? '#a78bfa' : secondsLeft > 5 ? '#facc15' : '#f87171'}
                     strokeDasharray={2 * Math.PI * 24}
-                    strokeDashoffset={2 * Math.PI * 24 * (1 - secondsLeft / TURN_DURATION)}
+                    strokeDashoffset={2 * Math.PI * 24 * (1 - secondsLeft / (gameState.settings.clueTimer || 30))}
                     className="transition-all duration-1000 ease-linear"
                   />
                 </svg>
@@ -142,6 +144,14 @@ export default function CluesScreen({
                   {t('clues.submit')}
                 </Button>
               </form>
+              {gameState.settings.allowSkip && (
+                <button
+                  onClick={skipMyTurn}
+                  className="mt-3 text-slate-500 text-sm hover:text-slate-300 transition-colors cursor-pointer"
+                >
+                  {t('clues.skip')}
+                </button>
+              )}
             </>
           ) : (
             <div className="text-center">
@@ -183,8 +193,8 @@ export default function CluesScreen({
         </div>
       )}
 
-      {/* Host controls when round is done */}
-      {allDone && gameState.isHost && !gameState.isSpectator && (
+      {/* Host controls when round is done — only when maxRounds=1 (manual mode) */}
+      {allDone && gameState.isHost && !gameState.isSpectator && gameState.settings.maxRounds === 1 && (
         <div className="space-y-3 pb-safe">
           <Button onClick={startVoting}>{t('clues.goToVoting')}</Button>
           <Button onClick={nextRound} variant="secondary">

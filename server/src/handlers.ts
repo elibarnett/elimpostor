@@ -1,5 +1,6 @@
 import type { Server, Socket } from 'socket.io';
 import type { GameManager } from './gameManager.js';
+import type { GameSettings } from './types.js';
 
 export function registerHandlers(io: Server, gm: GameManager) {
   function broadcastState(code: string) {
@@ -21,7 +22,7 @@ export function registerHandlers(io: Server, gm: GameManager) {
     });
   }
 
-  /** Start (or restart) the 30s turn timer. Chains automatically on expiry. */
+  /** Start (or restart) the turn timer. Chains automatically on expiry. Handles auto-advance for maxRounds > 1. */
   function startTurnTimerIfNeeded(code: string) {
     const game = gm.getGame(code);
     if (!game || game.phase !== 'clues') {
@@ -31,6 +32,17 @@ export function registerHandlers(io: Server, gm: GameManager) {
     const activePlayers = game.players.filter((p: { isEliminated: boolean; isSpectator: boolean }) => !p.isEliminated && !p.isSpectator);
     if (game.turnIndex >= activePlayers.length) {
       gm.clearTurnTimer(code);
+      // Auto-advance if maxRounds > 1
+      if (game.settings.maxRounds > 1) {
+        if (game.round < game.settings.maxRounds) {
+          gm.autoNextRound(code);
+          startTurnTimerIfNeeded(code);
+          broadcastState(code);
+        } else {
+          gm.autoStartVoting(code);
+          broadcastState(code);
+        }
+      }
       return;
     }
     gm.setTurnTimer(code, () => {
@@ -151,6 +163,34 @@ export function registerHandlers(io: Server, gm: GameManager) {
         socket.emit('game:error', { message: error });
         return;
       }
+      broadcastState(game.code);
+    });
+
+    socket.on('game:updateSettings', ({ settings }: { settings: Partial<GameSettings> }) => {
+      if (!playerId) return;
+      const game = gm.findGameByPlayerId(playerId);
+      if (!game) return;
+      const { error } = gm.updateSettings(playerId, game.code, settings);
+      if (error) {
+        socket.emit('game:error', { message: error });
+        return;
+      }
+      broadcastState(game.code);
+    });
+
+    socket.on('game:skipMyTurn', () => {
+      if (!playerId) return;
+      const game = gm.findGameByPlayerId(playerId);
+      if (!game || game.phase !== 'clues') return;
+      if (!game.settings.allowSkip) {
+        socket.emit('game:error', { message: 'skip_not_allowed' });
+        return;
+      }
+      const activePlayers = game.players.filter((p: { isEliminated: boolean; isSpectator: boolean }) => !p.isEliminated && !p.isSpectator);
+      const currentPlayer = activePlayers[game.turnIndex];
+      if (!currentPlayer || currentPlayer.id !== playerId) return;
+      gm.skipTurn(game.code);
+      startTurnTimerIfNeeded(game.code);
       broadcastState(game.code);
     });
 
