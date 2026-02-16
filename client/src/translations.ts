@@ -147,6 +147,9 @@ const translations = {
     'error.empty_clue': 'Ingresa una pista',
     'error.not_your_turn': 'No es tu turno',
     'error.cannot_vote_self': 'No puedes votar por ti mismo',
+    'error.cannot_vote_spectator': 'No puedes votar por un espectador',
+    'error.cannot_transfer_to_spectator': 'No puedes transferir el rol de anfitrión a un espectador',
+    'error.wrong_phase': 'Acción no permitida en esta fase',
     'error.disconnected': 'La partida terminó',
 
     // Leave
@@ -304,6 +307,9 @@ const translations = {
     'error.empty_clue': 'Enter a clue',
     'error.not_your_turn': 'Not your turn',
     'error.cannot_vote_self': 'You can\'t vote for yourself',
+    'error.cannot_vote_spectator': 'You can\'t vote for a spectator',
+    'error.cannot_transfer_to_spectator': 'You can\'t transfer host to a spectator',
+    'error.wrong_phase': 'Action not allowed in this phase',
     'error.disconnected': 'The game ended',
 
     // Leave
