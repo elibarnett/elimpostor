@@ -417,6 +417,7 @@ export class GameManager {
   startGame(playerId: string, code: string): { game?: Game; error?: string } {
     const game = this.games.get(code);
     if (!game) return { error: 'room_not_found' };
+    if (game.phase !== 'lobby') return { error: 'wrong_phase' };
     if (game.hostId !== playerId) return { error: 'not_host' };
     const actualPlayers = game.players.filter((p) => !p.isSpectator);
     if (actualPlayers.length < 3) return { error: 'not_enough_players' };
@@ -428,6 +429,7 @@ export class GameManager {
   setWord(playerId: string, code: string, word: string): { game?: Game; error?: string } {
     const game = this.games.get(code);
     if (!game) return { error: 'room_not_found' };
+    if (game.phase !== 'setup') return { error: 'wrong_phase' };
     if (game.hostId !== playerId) return { error: 'not_host' };
     if (!word.trim()) return { error: 'empty_word' };
 
@@ -435,6 +437,7 @@ export class GameManager {
 
     // Randomly pick impostor (exclude the host and spectators — host chose the word)
     const nonHostPlayers = game.players.filter((p) => p.id !== playerId && !p.isSpectator);
+    if (nonHostPlayers.length === 0) return { error: 'not_enough_players' };
     const randomIndex = Math.floor(Math.random() * nonHostPlayers.length);
     game.impostorId = nonHostPlayers[randomIndex].id;
 
@@ -462,6 +465,7 @@ export class GameManager {
   markRoleReady(playerId: string, code: string): { game?: Game; error?: string } {
     const game = this.games.get(code);
     if (!game) return { error: 'room_not_found' };
+    if (game.phase !== 'reveal') return { error: 'wrong_phase' };
 
     const player = game.players.find((p) => p.id === playerId);
     if (!player) return { error: 'player_not_found' };
@@ -497,6 +501,7 @@ export class GameManager {
 
     const newHost = game.players.find((p) => p.id === newHostId);
     if (!newHost) return { error: 'player_not_found' };
+    if (newHost.isSpectator) return { error: 'cannot_transfer_to_spectator' };
 
     this.clearTurnTimer(code);
     // Transfer host
@@ -549,6 +554,7 @@ export class GameManager {
   nextRound(playerId: string, code: string): { game?: Game; error?: string } {
     const game = this.games.get(code);
     if (!game) return { error: 'room_not_found' };
+    if (game.phase !== 'clues') return { error: 'wrong_phase' };
     if (game.hostId !== playerId) return { error: 'not_host' };
 
     game.round++;
@@ -564,6 +570,7 @@ export class GameManager {
   startVoting(playerId: string, code: string): { game?: Game; error?: string } {
     const game = this.games.get(code);
     if (!game) return { error: 'room_not_found' };
+    if (game.phase !== 'clues') return { error: 'wrong_phase' };
     if (game.hostId !== playerId) return { error: 'not_host' };
 
     this.clearTurnTimer(code);
@@ -608,6 +615,7 @@ export class GameManager {
 
     const target = game.players.find((p) => p.id === votedForId);
     if (!target) return { error: 'target_not_found' };
+    if (target.isSpectator) return { error: 'cannot_vote_spectator' };
     if (target.isEliminated) return { error: 'cannot_vote_eliminated' };
 
     game.votes[playerId] = votedForId;

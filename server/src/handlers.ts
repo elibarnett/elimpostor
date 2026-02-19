@@ -372,12 +372,19 @@ export function registerHandlers(io: Server, gm: GameManager) {
         }
         gm.endGame(code);
       } else {
-        // Non-host leaving → remove them, game continues
-        const { game: updatedGame } = gm.removePlayer(playerId);
-        if (updatedGame?.phase === 'clues') {
-          startTurnTimerIfNeeded(code);
+        // Non-host leaving → remove them, game may end if impostor left or too few players
+        const { game: updatedGame, gameEnded } = gm.removePlayer(playerId);
+        if (updatedGame && gameEnded) {
+          for (const p of updatedGame.players) {
+            if (p.socketId) io.to(p.socketId).emit('game:ended');
+          }
+          gm.endGame(code);
+        } else if (updatedGame) {
+          if (updatedGame.phase === 'clues') {
+            startTurnTimerIfNeeded(code);
+          }
+          broadcastState(code);
         }
-        broadcastState(code);
       }
 
       socket.leave(code);
