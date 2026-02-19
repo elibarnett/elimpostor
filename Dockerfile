@@ -25,6 +25,7 @@ COPY --from=base /app/server/package.json /app/server/package-lock.json ./server
 RUN cd server && npm ci --omit=dev
 
 COPY --from=base /app/server/dist ./server/dist
+COPY --from=base /app/server/drizzle ./server/drizzle
 COPY --from=base /app/client/dist ./client/dist
 
 ENV NODE_ENV=production

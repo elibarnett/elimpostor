@@ -3,8 +3,10 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { GameManager } from './gameManager.js';
 import { registerHandlers } from './handlers.js';
+import { db } from './db/index.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -27,7 +29,22 @@ app.get('/{*splat}', (_req, res) => {
   res.sendFile(path.join(clientDist, 'index.html'));
 });
 
-const PORT = process.env.PORT || 3001;
-httpServer.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+async function start() {
+  if (db) {
+    try {
+      const migrationsFolder = path.join(__dirname, '../drizzle');
+      await migrate(db, { migrationsFolder });
+      console.log('Database migrations applied successfully');
+    } catch (error) {
+      console.error('Failed to run database migrations:', error);
+      process.exit(1);
+    }
+  }
+
+  const PORT = process.env.PORT || 3001;
+  httpServer.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+start();
