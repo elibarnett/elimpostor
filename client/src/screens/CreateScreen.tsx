@@ -12,7 +12,16 @@ interface CreateScreenProps {
 
 export default function CreateScreen({ setScreen, createGame, error }: CreateScreenProps) {
   const { t } = useLanguage();
-  const [name, setName] = useState('');
+  const [name, setName] = useState(() => {
+    try {
+      const raw = localStorage.getItem('impostor_profile');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return typeof parsed.displayName === 'string' ? parsed.displayName : '';
+      }
+    } catch { /* ignore */ }
+    return '';
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
