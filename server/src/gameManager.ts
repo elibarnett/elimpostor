@@ -1,11 +1,6 @@
 import type { Game, GameMode, GameSettings, Player, PersonalizedGameState, GamePhase } from './types.js';
 
-const AVATARS = ['🦊', '🐸', '🦁', '🐼', '🐙', '🦄', '🐲', '🦜', '🐺', '🦈', '🎃', '🤖', '🛸', '🌵', '🍄'];
-const COLORS = [
-  '#a78bfa', '#f472b6', '#fb923c', '#34d399', '#60a5fa',
-  '#facc15', '#f87171', '#2dd4bf', '#a3e635', '#c084fc',
-  '#fb7185', '#38bdf8', '#fbbf24', '#4ade80', '#e879f9',
-];
+import { AVATARS, AVATAR_COLORS as COLORS } from './constants.js';
 
 // Consonants and vowels for pronounceable codes
 const CONSONANTS = 'BCDFGHJKLMNPRSTV';
@@ -50,8 +45,11 @@ export class GameManager {
     return code;
   }
 
-  createGame(playerId: string, socketId: string, hostName: string): Game {
+  createGame(playerId: string, socketId: string, hostName: string, preferredAvatar?: string): Game {
     const code = this.generateCode();
+    const resolvedAvatar = (preferredAvatar && (AVATARS as readonly string[]).includes(preferredAvatar))
+      ? preferredAvatar
+      : AVATARS[0];
     const game: Game = {
       code,
       hostId: playerId,
@@ -62,7 +60,7 @@ export class GameManager {
           id: playerId,
           socketId,
           name: hostName,
-          avatar: AVATARS[0],
+          avatar: resolvedAvatar,
           color: COLORS[0],
           isHost: true,
           isSpectator: false,
@@ -151,7 +149,7 @@ export class GameManager {
     return { game };
   }
 
-  addPlayer(code: string, playerId: string, socketId: string, playerName: string): { game?: Game; error?: string } {
+  addPlayer(code: string, playerId: string, socketId: string, playerName: string, preferredAvatar?: string): { game?: Game; error?: string } {
     const game = this.games.get(code.toUpperCase());
     if (!game) return { error: 'room_not_found' };
     if (game.phase !== 'lobby') return { error: 'game_in_progress' };
@@ -161,13 +159,15 @@ export class GameManager {
     if (game.players.length >= 15) return { error: 'room_full' };
 
     const usedAvatars = new Set(game.players.map((p) => p.avatar));
-    const availableAvatar = AVATARS.find((a) => !usedAvatars.has(a)) || AVATARS[game.players.length % AVATARS.length];
+    const resolvedAvatar = (preferredAvatar && (AVATARS as readonly string[]).includes(preferredAvatar) && !usedAvatars.has(preferredAvatar))
+      ? preferredAvatar
+      : AVATARS.find((a) => !usedAvatars.has(a)) || AVATARS[game.players.length % AVATARS.length];
 
     const player: Player = {
       id: playerId,
       socketId,
       name: playerName,
-      avatar: availableAvatar,
+      avatar: resolvedAvatar,
       color: COLORS[game.players.length % COLORS.length],
       isHost: false,
       isSpectator: false,
@@ -181,7 +181,7 @@ export class GameManager {
     return { game };
   }
 
-  addSpectator(code: string, playerId: string, socketId: string, playerName: string): { game?: Game; error?: string } {
+  addSpectator(code: string, playerId: string, socketId: string, playerName: string, preferredAvatar?: string): { game?: Game; error?: string } {
     const game = this.games.get(code.toUpperCase());
     if (!game) return { error: 'room_not_found' };
     if (game.players.some((p) => p.name.toLowerCase() === playerName.toLowerCase())) {
@@ -190,13 +190,15 @@ export class GameManager {
     if (game.players.length >= 15) return { error: 'room_full' };
 
     const usedAvatars = new Set(game.players.map((p) => p.avatar));
-    const availableAvatar = AVATARS.find((a) => !usedAvatars.has(a)) || AVATARS[game.players.length % AVATARS.length];
+    const resolvedAvatar = (preferredAvatar && (AVATARS as readonly string[]).includes(preferredAvatar) && !usedAvatars.has(preferredAvatar))
+      ? preferredAvatar
+      : AVATARS.find((a) => !usedAvatars.has(a)) || AVATARS[game.players.length % AVATARS.length];
 
     const spectator: Player = {
       id: playerId,
       socketId,
       name: playerName,
-      avatar: availableAvatar,
+      avatar: resolvedAvatar,
       color: COLORS[game.players.length % COLORS.length],
       isHost: false,
       isSpectator: true,

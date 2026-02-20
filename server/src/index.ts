@@ -7,6 +7,7 @@ import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { GameManager } from './gameManager.js';
 import { registerHandlers } from './handlers.js';
 import { db } from './db/index.js';
+import playerRoutes from './routes/players.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -21,6 +22,12 @@ const io = new Server(httpServer, {
 
 const gm = new GameManager();
 registerHandlers(io, gm);
+
+// JSON body parsing for REST API
+app.use(express.json());
+
+// REST API routes
+app.use('/api/players', playerRoutes);
 
 // In production, serve built client
 const clientDist = path.join(__dirname, '../../client/dist');

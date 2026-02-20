@@ -15,7 +15,16 @@ interface JoinScreenProps {
 export default function JoinScreen({ setScreen, joinGame, watchGame, error, initialCode = '' }: JoinScreenProps) {
   const { t } = useLanguage();
   const [code, setCode] = useState(initialCode);
-  const [name, setName] = useState('');
+  const [name, setName] = useState(() => {
+    try {
+      const raw = localStorage.getItem('impostor_profile');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return typeof parsed.displayName === 'string' ? parsed.displayName : '';
+      }
+    } catch { /* ignore */ }
+    return '';
+  });
 
   const canSubmit = code.trim().length === 4 && !!name.trim();
 

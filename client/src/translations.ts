@@ -158,6 +158,14 @@ const translations = {
     'leave.playerWarning': 'Serás removido de la partida.',
     'leave.yes': 'Salir',
     'leave.cancel': 'Cancelar',
+
+    // Profile
+    'profile.title': 'Tu perfil',
+    'profile.namePlaceholder': 'Tu nombre',
+    'profile.avatar': 'Avatar',
+    'profile.save': 'Guardar',
+    'profile.cancel': 'Cancelar',
+    'profile.login': 'Iniciar sesión',
   },
   en: {
     // Home
@@ -318,6 +326,14 @@ const translations = {
     'leave.playerWarning': 'You will be removed from the game.',
     'leave.yes': 'Leave',
     'leave.cancel': 'Cancel',
+
+    // Profile
+    'profile.title': 'Your Profile',
+    'profile.namePlaceholder': 'Your name',
+    'profile.avatar': 'Avatar',
+    'profile.save': 'Save',
+    'profile.cancel': 'Cancel',
+    'profile.login': 'Log in',
   },
 } as const;
 

@@ -1,6 +1,8 @@
 import type { Server, Socket } from 'socket.io';
 import type { GameManager } from './gameManager.js';
 import type { GameSettings } from './types.js';
+import { db } from './db/index.js';
+import { players } from './db/schema.js';
 
 export function registerHandlers(io: Server, gm: GameManager) {
   function broadcastState(code: string) {
@@ -63,6 +65,17 @@ export function registerHandlers(io: Server, gm: GameManager) {
       playerId = pid;
       console.log(`Auth: socket ${socket.id} -> player ${playerId}`);
 
+      // Fire-and-forget: upsert player record in DB
+      if (db) {
+        db.insert(players)
+          .values({ id: playerId, lastSeenAt: new Date() })
+          .onConflictDoUpdate({
+            target: players.id,
+            set: { lastSeenAt: new Date() },
+          })
+          .catch((err: unknown) => console.error('Player upsert failed:', err));
+      }
+
       // Try to reconnect to an existing game
       const { game, code } = gm.reconnectPlayer(playerId, socket.id);
       if (game && code) {
@@ -72,7 +85,7 @@ export function registerHandlers(io: Server, gm: GameManager) {
       }
     });
 
-    socket.on('game:create', ({ playerName }: { playerName: string }) => {
+    socket.on('game:create', ({ playerName, preferredAvatar }: { playerName: string; preferredAvatar?: string }) => {
       if (!playerId) {
         socket.emit('game:error', { message: 'not_authenticated' });
         return;
@@ -81,12 +94,12 @@ export function registerHandlers(io: Server, gm: GameManager) {
         socket.emit('game:error', { message: 'name_required' });
         return;
       }
-      const game = gm.createGame(playerId, socket.id, playerName.trim());
+      const game = gm.createGame(playerId, socket.id, playerName.trim(), preferredAvatar);
       socket.join(game.code);
       broadcastState(game.code);
     });
 
-    socket.on('game:join', ({ code, playerName }: { code: string; playerName: string }) => {
+    socket.on('game:join', ({ code, playerName, preferredAvatar }: { code: string; playerName: string; preferredAvatar?: string }) => {
       if (!playerId) {
         socket.emit('game:error', { message: 'not_authenticated' });
         return;
@@ -99,7 +112,7 @@ export function registerHandlers(io: Server, gm: GameManager) {
         socket.emit('game:error', { message: 'code_required' });
         return;
       }
-      const { game, error } = gm.addPlayer(code.toUpperCase(), playerId, socket.id, playerName.trim());
+      const { game, error } = gm.addPlayer(code.toUpperCase(), playerId, socket.id, playerName.trim(), preferredAvatar);
       if (error || !game) {
         socket.emit('game:error', { message: error });
         return;
@@ -108,7 +121,7 @@ export function registerHandlers(io: Server, gm: GameManager) {
       broadcastState(game.code);
     });
 
-    socket.on('game:watch', ({ code, playerName }: { code: string; playerName: string }) => {
+    socket.on('game:watch', ({ code, playerName, preferredAvatar }: { code: string; playerName: string; preferredAvatar?: string }) => {
       if (!playerId) {
         socket.emit('game:error', { message: 'not_authenticated' });
         return;
@@ -121,7 +134,7 @@ export function registerHandlers(io: Server, gm: GameManager) {
         socket.emit('game:error', { message: 'code_required' });
         return;
       }
-      const { game, error } = gm.addSpectator(code.toUpperCase(), playerId, socket.id, playerName.trim());
+      const { game, error } = gm.addSpectator(code.toUpperCase(), playerId, socket.id, playerName.trim(), preferredAvatar);
       if (error || !game) {
         socket.emit('game:error', { message: error });
         return;

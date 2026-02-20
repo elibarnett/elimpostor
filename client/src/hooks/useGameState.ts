@@ -4,14 +4,39 @@ import type { GameState, GameMode, GameSettings, AppScreen } from '../types';
 
 const SOCKET_URL = import.meta.env.DEV ? 'http://localhost:3001' : '';
 
-/** Generate or retrieve a persistent playerId */
+const PLAYER_ID_KEY = 'impostor_player_id';
+const PROFILE_KEY = 'impostor_profile';
+
+/** Generate or retrieve a persistent playerId, migrating from sessionStorage if needed */
 function getPlayerId(): string {
-  let id = sessionStorage.getItem('impostor_player_id');
-  if (!id) {
-    id = crypto.randomUUID();
-    sessionStorage.setItem('impostor_player_id', id);
+  // Check localStorage first (new persistent location)
+  let id = localStorage.getItem(PLAYER_ID_KEY);
+  if (id) return id;
+
+  // Migrate from sessionStorage if present (one-time migration)
+  id = sessionStorage.getItem(PLAYER_ID_KEY);
+  if (id) {
+    localStorage.setItem(PLAYER_ID_KEY, id);
+    sessionStorage.removeItem(PLAYER_ID_KEY);
+    return id;
   }
+
+  // Generate new UUID
+  id = crypto.randomUUID();
+  localStorage.setItem(PLAYER_ID_KEY, id);
   return id;
+}
+
+/** Read preferred avatar from saved profile */
+function getPreferredAvatar(): string | undefined {
+  try {
+    const raw = localStorage.getItem(PROFILE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return typeof parsed.avatar === 'string' ? parsed.avatar : undefined;
+    }
+  } catch { /* corrupted data, ignore */ }
+  return undefined;
 }
 
 export function useGameState(initialScreen?: AppScreen) {
@@ -71,15 +96,15 @@ export function useGameState(initialScreen?: AppScreen) {
   }, []);
 
   const createGame = useCallback((playerName: string) => {
-    emit('game:create', { playerName });
+    emit('game:create', { playerName, preferredAvatar: getPreferredAvatar() });
   }, [emit]);
 
   const joinGame = useCallback((code: string, playerName: string) => {
-    emit('game:join', { code, playerName });
+    emit('game:join', { code, playerName, preferredAvatar: getPreferredAvatar() });
   }, [emit]);
 
   const watchGame = useCallback((code: string, playerName: string) => {
-    emit('game:watch', { code, playerName });
+    emit('game:watch', { code, playerName, preferredAvatar: getPreferredAvatar() });
   }, [emit]);
 
   const convertToPlayer = useCallback(() => {
