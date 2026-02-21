@@ -1,6 +1,7 @@
 import type { Game, GameMode, GameSettings, Player, PersonalizedGameState, GamePhase } from './types.js';
 
 import { AVATARS, AVATAR_COLORS as COLORS } from './constants.js';
+import { persistGameResult } from './db/persistGameResult.js';
 
 // Consonants and vowels for pronounceable codes
 const CONSONANTS = 'BCDFGHJKLMNPRSTV';
@@ -30,6 +31,61 @@ export class GameManager {
   private turnTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
   // Impostor guess timers: game code -> timeout handle
   private guessTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
+
+  /** Capture current-round clues into clueHistory before they are cleared. */
+  private _snapshotClues(game: Game): void {
+    for (const p of game.players) {
+      if (p.isSpectator || p.isEliminated) continue;
+      if (p.clue !== null) {
+        if (!game.clueHistory[p.id]) game.clueHistory[p.id] = [];
+        game.clueHistory[p.id].push(p.clue);
+      }
+    }
+  }
+
+  /** Capture current-round votes into voteHistory before they are cleared. */
+  private _snapshotVotes(game: Game): void {
+    if (Object.keys(game.votes).length > 0) {
+      game.voteHistory.push({ ...game.votes });
+    }
+  }
+
+  /** Determine which team won the game. */
+  private _determineWinningTeam(game: Game): 'impostor' | 'citizens' {
+    // Impostor guessed the word correctly
+    if (game.impostorGuessCorrect === true) return 'impostor';
+
+    // Impostor was caught and failed to guess (or timed out)
+    if (game.impostorGuessCorrect === false) return 'citizens';
+
+    // impostorGuessCorrect is null — no guess phase happened
+
+    // Impostor left the game → citizens win by forfeit
+    const impostorPresent = game.players.some((p) => p.id === game.impostorId);
+    if (!impostorPresent) return 'citizens';
+
+    // Elimination mode: impostor survived (not eliminated)
+    if (game.settings.elimination) {
+      const impostor = game.players.find((p) => p.id === game.impostorId);
+      if (impostor && !impostor.isEliminated) return 'impostor';
+    }
+
+    // Standard mode: impostor not caught → impostor wins
+    return 'impostor';
+  }
+
+  /** Fire-and-forget: persist game result to DB. Only persists once per game. */
+  private _persistIfNeeded(game: Game): void {
+    if (game.resultsPersisted) return;
+    if (game.phase !== 'results') return;
+
+    game.resultsPersisted = true;
+    const winningTeam = this._determineWinningTeam(game);
+
+    persistGameResult(game, winningTeam).catch((err) => {
+      console.error(`Failed to persist game result for ${game.code}:`, err);
+    });
+  }
 
   generateCode(): string {
     let code: string;
@@ -82,6 +138,10 @@ export class GameManager {
       settings: { ...DEFAULT_SETTINGS },
       eliminationHistory: [],
       lastEliminatedId: null,
+      clueHistory: {},
+      voteHistory: [],
+      createdAt: Date.now(),
+      resultsPersisted: false,
     };
     this.games.set(code, game);
     this.playerGameMap.set(playerId, code);
@@ -381,6 +441,7 @@ export class GameManager {
       this.clearTurnTimer(code);
       this.clearGuessTimer(code);
       game.phase = 'results';
+      this._persistIfNeeded(game);
       return { game, gameEnded: true, code };
     }
 
@@ -393,6 +454,7 @@ export class GameManager {
       this.clearTurnTimer(code);
       this.clearGuessTimer(code);
       game.phase = 'results';
+      this._persistIfNeeded(game);
       return { game, gameEnded: true, code };
     }
 
@@ -459,6 +521,9 @@ export class GameManager {
     game.guessDeadline = null;
     game.eliminationHistory = [];
     game.lastEliminatedId = null;
+    game.clueHistory = {};
+    game.voteHistory = [];
+    game.resultsPersisted = false;
 
     game.phase = 'reveal';
     return { game };
@@ -493,6 +558,7 @@ export class GameManager {
     if (game.phase !== 'playing') return { error: 'wrong_phase' };
 
     game.phase = 'results';
+    this._persistIfNeeded(game);
     return { game };
   }
 
@@ -523,6 +589,9 @@ export class GameManager {
     game.guessDeadline = null;
     game.eliminationHistory = [];
     game.lastEliminatedId = null;
+    game.clueHistory = {};
+    game.voteHistory = [];
+    game.resultsPersisted = false;
     game.players.forEach((p) => {
       if (!p.isSpectator) {
         p.hasSeenRole = false;
@@ -559,6 +628,7 @@ export class GameManager {
     if (game.phase !== 'clues') return { error: 'wrong_phase' };
     if (game.hostId !== playerId) return { error: 'not_host' };
 
+    this._snapshotClues(game);
     game.round++;
     game.turnIndex = 0;
     game.turnDeadline = null;
@@ -585,6 +655,7 @@ export class GameManager {
   autoNextRound(code: string): { game?: Game } {
     const game = this.games.get(code);
     if (!game) return {};
+    this._snapshotClues(game);
     game.round++;
     game.turnIndex = 0;
     game.turnDeadline = null;
@@ -660,6 +731,7 @@ export class GameManager {
             if (remaining.length <= 2) {
               // Impostor wins by survival
               game.phase = 'results';
+              this._persistIfNeeded(game);
             } else {
               // Continue — show elimination results then loop back
               game.phase = 'elimination-results';
@@ -671,6 +743,7 @@ export class GameManager {
           const remaining = game.players.filter((p) => !p.isEliminated && !p.isSpectator);
           if (remaining.length <= 2) {
             game.phase = 'results';
+            this._persistIfNeeded(game);
           } else {
             game.phase = 'elimination-results';
           }
@@ -686,6 +759,7 @@ export class GameManager {
           game.impostorGuessCorrect = null;
         } else {
           game.phase = 'results';
+          this._persistIfNeeded(game);
         }
       }
     }
@@ -730,6 +804,7 @@ export class GameManager {
     game.impostorGuess = guess.trim();
     game.impostorGuessCorrect = normalizedGuess === normalizedWord;
     game.phase = 'results';
+    this._persistIfNeeded(game);
     return { game };
   }
 
@@ -741,6 +816,7 @@ export class GameManager {
     game.impostorGuess = null;
     game.impostorGuessCorrect = false;
     game.phase = 'results';
+    this._persistIfNeeded(game);
     return { game };
   }
 
@@ -761,6 +837,9 @@ export class GameManager {
     game.guessDeadline = null;
     game.eliminationHistory = [];
     game.lastEliminatedId = null;
+    game.clueHistory = {};
+    game.voteHistory = [];
+    game.resultsPersisted = false;
     game.players.forEach((p) => {
       if (!p.isSpectator) {
         p.hasSeenRole = false;
@@ -777,6 +856,10 @@ export class GameManager {
     if (!game) return { error: 'room_not_found' };
     if (game.hostId !== playerId) return { error: 'not_host' };
     if (game.phase !== 'elimination-results') return { error: 'wrong_phase' };
+
+    // Snapshot clues and votes before resetting for next round
+    this._snapshotClues(game);
+    this._snapshotVotes(game);
 
     // Advance to next round of clues
     game.round++;
