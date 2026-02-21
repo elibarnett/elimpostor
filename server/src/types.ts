@@ -52,6 +52,10 @@ export interface Game {
   settings: GameSettings;
   eliminationHistory: Array<{ round: number; playerId: string }>;
   lastEliminatedId: string | null;
+  clueHistory: Record<string, string[]>;
+  voteHistory: Array<Record<string, string>>;
+  createdAt: number;
+  resultsPersisted: boolean;
 }
 
 export interface PersonalizedGameState {
