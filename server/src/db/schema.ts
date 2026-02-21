@@ -64,3 +64,32 @@ export const gamePlayers = pgTable(
     index('game_players_player_id_idx').on(table.playerId),
   ]
 );
+
+export const sessions = pgTable('sessions', {
+  id: serial('id').primaryKey(),
+  roomCode: varchar('room_code', { length: 4 }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  endedAt: timestamp('ended_at', { withTimezone: true }),
+  totalRounds: integer('total_rounds').notNull().default(0),
+});
+
+export const sessionScores = pgTable(
+  'session_scores',
+  {
+    id: serial('id').primaryKey(),
+    sessionId: integer('session_id')
+      .notNull()
+      .references(() => sessions.id, { onDelete: 'cascade' }),
+    playerId: uuid('player_id')
+      .notNull()
+      .references(() => players.id),
+    playerName: varchar('player_name', { length: 30 }).notNull(),
+    score: integer('score').notNull().default(0),
+    roundsWon: integer('rounds_won').notNull().default(0),
+    roundsPlayed: integer('rounds_played').notNull().default(0),
+    impostorCount: integer('impostor_count').notNull().default(0),
+  },
+  (table) => [
+    uniqueIndex('session_scores_session_player_idx').on(table.sessionId, table.playerId),
+  ]
+);

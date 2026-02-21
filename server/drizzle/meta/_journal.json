@@ -15,6 +15,13 @@
       "when": 1771682518818,
       "tag": "0001_tricky_diamondback",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1771703880000,
+      "tag": "0002_sessions_and_scores",
+      "breakpoints": true
     }
   ]
 }

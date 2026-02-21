@@ -1,7 +1,14 @@
-import type { Game, GameMode, GameSettings, Player, PersonalizedGameState, GamePhase } from './types.js';
+import type { Game, GameMode, GameSettings, Player, PersonalizedGameState, GamePhase, SessionScore, RoundScoreDelta } from './types.js';
 
 import { AVATARS, AVATAR_COLORS as COLORS } from './constants.js';
 import { persistGameResult } from './db/persistGameResult.js';
+import { createSession, persistSessionScores, endSession } from './db/persistSessionScore.js';
+
+// Scoring constants
+const SCORE_CITIZENS_WIN_CORRECT_VOTE = 2;  // voted for impostor + citizens win
+const SCORE_CITIZENS_WIN_WRONG_VOTE   = 1;  // didn't vote for impostor + citizens win
+const SCORE_VOTED_CORRECTLY_BONUS     = 1;  // always given when voted for impostor (stacks)
+const SCORE_IMPOSTOR_WIN              = 3;  // impostor survived or guessed correctly
 
 // Consonants and vowels for pronounceable codes
 const CONSONANTS = 'BCDFGHJKLMNPRSTV';
@@ -82,9 +89,99 @@ export class GameManager {
     game.resultsPersisted = true;
     const winningTeam = this._determineWinningTeam(game);
 
+    // Compute and apply score deltas before persisting
+    this._applyScores(game, winningTeam);
+
     persistGameResult(game, winningTeam).catch((err) => {
       console.error(`Failed to persist game result for ${game.code}:`, err);
     });
+
+    // Persist session scores fire-and-forget
+    if (game.sessionId !== null) {
+      const sessionId = game.sessionId;
+      persistSessionScores(sessionId, game.sessionScores, game.round).catch((err) => {
+        console.error(`Failed to persist session scores for ${game.code}:`, err);
+      });
+    }
+  }
+
+  /** Compute per-player score deltas for this round and apply to sessionScores. */
+  private _applyScores(game: Game, winningTeam: string): void {
+    if (game.mode === 'local') return; // no scoring in local/in-person mode
+
+    const impostorId = game.impostorId;
+    if (!impostorId) return;
+
+    // Build votedCorrectly map from current votes + vote history
+    const finalVoteHistory = [...game.voteHistory];
+    if (Object.keys(game.votes).length > 0) finalVoteHistory.push({ ...game.votes });
+
+    const votedCorrectlyMap: Record<string, boolean> = {};
+    for (const roundVotes of finalVoteHistory) {
+      for (const [voterId, votedForId] of Object.entries(roundVotes)) {
+        if (votedForId === impostorId) votedCorrectlyMap[voterId] = true;
+        if (!(voterId in votedCorrectlyMap)) votedCorrectlyMap[voterId] = false;
+      }
+    }
+
+    const citizensWon = winningTeam === 'citizens';
+    const impostorWon = winningTeam === 'impostor';
+    const impostorGuessedCorrectly = game.impostorGuessCorrect === true;
+
+    const deltas: RoundScoreDelta[] = [];
+
+    for (const entry of game.sessionScores) {
+      const isImpostor = entry.playerId === impostorId;
+      const votedCorrectly = votedCorrectlyMap[entry.playerId] === true;
+      let delta = 0;
+
+      if (isImpostor) {
+        if (impostorWon) {
+          delta = SCORE_IMPOSTOR_WIN;
+          deltas.push({ playerId: entry.playerId, delta, reason: impostorGuessedCorrectly ? 'impostorGuess' : 'impostorWin' });
+        }
+        entry.impostorCount++;
+      } else {
+        // voted correctly bonus — always awarded if they voted for impostor
+        if (votedCorrectly) {
+          delta += SCORE_VOTED_CORRECTLY_BONUS;
+          deltas.push({ playerId: entry.playerId, delta: SCORE_VOTED_CORRECTLY_BONUS, reason: 'votedCorrectly' });
+        }
+        if (citizensWon) {
+          const winBonus = votedCorrectly ? SCORE_CITIZENS_WIN_CORRECT_VOTE : SCORE_CITIZENS_WIN_WRONG_VOTE;
+          delta += winBonus;
+          deltas.push({ playerId: entry.playerId, delta: winBonus, reason: 'citizensWin' });
+        }
+        if (citizensWon) entry.roundsWon++;
+      }
+
+      entry.score += delta;
+      entry.roundsPlayed++;
+    }
+
+    game.lastRoundDeltas = deltas;
+  }
+
+  /** Initialise session scores from current non-spectator players (call on startGame). */
+  private _initSessionScores(game: Game): void {
+    const existing = new Set(game.sessionScores.map((s) => s.playerId));
+    for (const p of game.players) {
+      if (p.isSpectator || existing.has(p.id)) continue;
+      game.sessionScores.push({
+        playerId: p.id,
+        playerName: p.name,
+        avatar: p.avatar,
+        score: 0,
+        roundsWon: 0,
+        roundsPlayed: 0,
+        impostorCount: 0,
+      });
+    }
+    // Update names/avatars for existing entries (player may have renamed)
+    for (const entry of game.sessionScores) {
+      const p = game.players.find((pl) => pl.id === entry.playerId);
+      if (p) { entry.playerName = p.name; entry.avatar = p.avatar; }
+    }
   }
 
   generateCode(): string {
@@ -142,6 +239,9 @@ export class GameManager {
       voteHistory: [],
       createdAt: Date.now(),
       resultsPersisted: false,
+      sessionId: null,
+      sessionScores: [],
+      lastRoundDeltas: [],
     };
     this.games.set(code, game);
     this.playerGameMap.set(playerId, code);
@@ -487,6 +587,15 @@ export class GameManager {
     if (actualPlayers.length < 3) return { error: 'not_enough_players' };
 
     game.phase = 'setup';
+
+    // Start a new session only on the very first game (sessionId null)
+    if (game.sessionId === null) {
+      createSession(game.code).then((id) => {
+        if (id !== null) game.sessionId = id;
+      }).catch(() => { /* DB unavailable, scoring continues in-memory */ });
+    }
+
+    this._initSessionScores(game);
     return { game };
   }
 
@@ -840,6 +949,7 @@ export class GameManager {
     game.clueHistory = {};
     game.voteHistory = [];
     game.resultsPersisted = false;
+    game.lastRoundDeltas = [];
     game.players.forEach((p) => {
       if (!p.isSpectator) {
         p.hasSeenRole = false;
@@ -847,6 +957,9 @@ export class GameManager {
         p.isEliminated = false;
       }
     });
+
+    // Session continues — add any new players who joined since last round
+    this._initSessionScores(game);
 
     return { game };
   }
@@ -881,6 +994,10 @@ export class GameManager {
     this.clearGuessTimer(code);
     const game = this.games.get(code);
     if (game) {
+      // Mark session as ended in DB
+      if (game.sessionId !== null) {
+        endSession(game.sessionId, game.round).catch(() => {});
+      }
       // Clean up player-game mappings and timers
       for (const player of game.players) {
         this.playerGameMap.delete(player.id);
@@ -952,6 +1069,12 @@ export class GameManager {
         return { round: e.round, playerName: p?.name ?? '?', playerId: e.playerId };
       }),
       lastEliminatedId: game.lastEliminatedId,
+      sessionScores: [...game.sessionScores]
+        .sort((a, b) => b.score - a.score || a.playerName.localeCompare(b.playerName))
+        .map(({ playerId, playerName, avatar, score, roundsWon, roundsPlayed }) => ({
+          playerId, playerName, avatar, score, roundsWon, roundsPlayed,
+        })),
+      lastRoundDeltas: game.lastRoundDeltas,
     };
   }
 

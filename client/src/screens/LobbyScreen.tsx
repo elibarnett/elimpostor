@@ -1,6 +1,7 @@
 import Button from '../components/Button';
 import PlayerCard from '../components/PlayerCard';
 import RoomCode from '../components/RoomCode';
+import Scoreboard from '../components/Scoreboard';
 import SettingsPanel from '../components/SettingsPanel';
 import WaitingDots from '../components/WaitingDots';
 import { useLanguage } from '../hooks/useLanguage';
@@ -40,6 +41,20 @@ export default function LobbyScreen({ gameState, startGame, setMode, setEliminat
           <PlayerCard key={player.id} player={player} animationDelay={i * 80} />
         ))}
       </div>
+
+      {/* Session scoreboard — shown between rounds */}
+      {gameState.mode !== 'local' && gameState.sessionScores.length > 0 && (
+        <div className="mb-6">
+          <p className="text-slate-400 text-xs text-center mb-2 uppercase tracking-wide">
+            {t('scores.title')}
+          </p>
+          <Scoreboard
+            scores={gameState.sessionScores}
+            currentPlayerId={gameState.playerId}
+            compact
+          />
+        </div>
+      )}
 
       <div className="pb-safe">
         {/* Mode toggle */}

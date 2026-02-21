@@ -190,6 +190,19 @@ const translations = {
     'profile.history.player': 'Jugador',
     'profile.error.unavailable': 'Estadísticas no disponibles ahora mismo.',
     'profile.error.retry': 'Reintentar',
+
+    // Scores
+    'scores.title': 'Tabla de Puntuación',
+    'scores.score': 'Puntos',
+    'scores.roundsWon': 'Rondas ganadas',
+    'scores.breakdown': 'Puntos esta ronda',
+    'scores.votedCorrectly': 'Votó correctamente',
+    'scores.citizensWin': 'Victoria del equipo',
+    'scores.impostorWin': 'Impostor sobrevivió',
+    'scores.impostorGuess': 'Adivinó la palabra',
+    'scores.leader': 'Líder',
+    'scores.pts': '{n} pts',
+    'scores.noScores': 'La puntuación empieza en la primera partida.',
   },
   en: {
     // Home
@@ -382,6 +395,19 @@ const translations = {
     'profile.history.player': 'Player',
     'profile.error.unavailable': 'Stats unavailable right now.',
     'profile.error.retry': 'Retry',
+
+    // Scores
+    'scores.title': 'Scoreboard',
+    'scores.score': 'Score',
+    'scores.roundsWon': 'Rounds won',
+    'scores.breakdown': 'Points this round',
+    'scores.votedCorrectly': 'Voted correctly',
+    'scores.citizensWin': 'Team win',
+    'scores.impostorWin': 'Impostor survived',
+    'scores.impostorGuess': 'Guessed the word',
+    'scores.leader': 'Leader',
+    'scores.pts': '{n} pts',
+    'scores.noScores': 'Scoring starts on the first game.',
   },
 } as const;
 
