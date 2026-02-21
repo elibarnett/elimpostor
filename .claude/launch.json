@@ -1,0 +1,16 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "server",
+      "runtimeExecutable": "/usr/bin/env",
+      "runtimeArgs": [
+        "-C", "/Users/eb/Documents/Projects/elimpostor/server",
+        "DATABASE_URL=postgresql://elimpostor:elimpostor@localhost:5433/elimpostor",
+        "node",
+        "dist/index.js"
+      ],
+      "port": 3001
+    }
+  ]
+}

@@ -9,6 +9,7 @@ import {
   jsonb,
   text,
   uniqueIndex,
+  index,
 } from 'drizzle-orm/pg-core';
 
 export const players = pgTable('players', {
@@ -19,21 +20,25 @@ export const players = pgTable('players', {
   lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
-export const games = pgTable('games', {
-  id: serial('id').primaryKey(),
-  code: varchar('code', { length: 4 }).notNull(),
-  mode: varchar('mode', { length: 10 }).notNull(),
-  hostId: uuid('host_id')
-    .notNull()
-    .references(() => players.id),
-  secretWord: varchar('secret_word', { length: 100 }),
-  impostorId: uuid('impostor_id').references(() => players.id),
-  settings: jsonb('settings').notNull(),
-  winningTeam: varchar('winning_team', { length: 20 }),
-  roundsPlayed: integer('rounds_played').notNull().default(0),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  endedAt: timestamp('ended_at', { withTimezone: true }),
-});
+export const games = pgTable(
+  'games',
+  {
+    id: serial('id').primaryKey(),
+    code: varchar('code', { length: 4 }).notNull(),
+    mode: varchar('mode', { length: 10 }).notNull(),
+    hostId: uuid('host_id')
+      .notNull()
+      .references(() => players.id),
+    secretWord: varchar('secret_word', { length: 100 }),
+    impostorId: uuid('impostor_id').references(() => players.id),
+    settings: jsonb('settings').notNull(),
+    winningTeam: varchar('winning_team', { length: 20 }),
+    roundsPlayed: integer('rounds_played').notNull().default(0),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    endedAt: timestamp('ended_at', { withTimezone: true }),
+  },
+  (table) => [index('games_ended_at_idx').on(table.endedAt)]
+);
 
 export const gamePlayers = pgTable(
   'game_players',
@@ -56,5 +61,6 @@ export const gamePlayers = pgTable(
   },
   (table) => [
     uniqueIndex('game_players_game_id_player_id_idx').on(table.gameId, table.playerId),
+    index('game_players_player_id_idx').on(table.playerId),
   ]
 );
