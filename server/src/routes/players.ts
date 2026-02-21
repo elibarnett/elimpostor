@@ -135,7 +135,7 @@ router.get('/:id/stats', async (req, res) => {
         impostorWon:       sql<number>`COUNT(*) FILTER (WHERE ${gamePlayers.wasImpostor} = true AND ${games.winningTeam} = 'impostor')`,
         citizenPlayed:     sql<number>`COUNT(*) FILTER (WHERE ${gamePlayers.wasImpostor} = false)`,
         citizenWon:        sql<number>`COUNT(*) FILTER (WHERE ${gamePlayers.wasImpostor} = false AND ${games.winningTeam} = 'citizens')`,
-        timesEliminated:   sql<number>`COUNT(*) FILTER (WHERE ${gamePlayers.wasEliminated} = true)`,
+        timesEliminated:   sql<number>`COUNT(*) FILTER (WHERE ${gamePlayers.wasEliminated} = true AND ${gamePlayers.wasImpostor} = false)`,
         votedCorrectCount: sql<number>`COUNT(*) FILTER (WHERE ${gamePlayers.votedCorrectly} = true)`,
         votedTotalCount:   sql<number>`COUNT(*) FILTER (WHERE ${gamePlayers.votedCorrectly} IS NOT NULL)`,
         totalCluesGiven:   sql<number>`COALESCE(SUM(array_length(${gamePlayers.finalClues}, 1)), 0)`,
@@ -150,7 +150,7 @@ router.get('/:id/stats', async (req, res) => {
       .from(gamePlayers)
       .innerJoin(games, eq(gamePlayers.gameId, games.id))
       .where(and(eq(gamePlayers.playerId, id), isNotNull(games.endedAt)))
-      .orderBy(desc(games.endedAt))
+      .orderBy(desc(games.endedAt), desc(games.id))
       .limit(100);
 
     let streakCount = 0;
@@ -267,7 +267,7 @@ router.get('/:id/history', async (req, res) => {
       .from(gamePlayers)
       .innerJoin(games, eq(gamePlayers.gameId, games.id))
       .where(baseWhere)
-      .orderBy(desc(games.endedAt))
+      .orderBy(desc(games.endedAt), desc(games.id))
       .limit(limit)
       .offset(offset);
 
