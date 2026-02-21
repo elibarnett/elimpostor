@@ -58,4 +58,4 @@ export interface GameState {
   lastEliminatedId: string | null;
 }
 
-export type AppScreen = 'home' | 'create' | 'join' | 'game';
+export type AppScreen = 'home' | 'create' | 'join' | 'game' | 'profile';

@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { LanguageContext, useLanguageProvider } from './hooks/useLanguage';
 import { useGameState } from './hooks/useGameState';
 import HomeScreen from './screens/HomeScreen';
+import ProfileScreen from './screens/ProfileScreen';
 import CreateScreen from './screens/CreateScreen';
 import JoinScreen from './screens/JoinScreen';
 import LobbyScreen from './screens/LobbyScreen';
@@ -104,6 +105,8 @@ export default function App() {
 
     // Pre-game screens
     switch (game.screen) {
+      case 'profile':
+        return <ProfileScreen setScreen={game.setScreen} />;
       case 'create':
         return (
           <CreateScreen

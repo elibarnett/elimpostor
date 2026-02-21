@@ -1,7 +1,5 @@
-import { useState } from 'react';
 import { useLanguage } from '../hooks/useLanguage';
 import { usePlayerProfile } from '../hooks/usePlayerProfile';
-import ProfileModal from '../components/ProfileModal';
 import type { AppScreen } from '../types';
 
 interface HomeScreenProps {
@@ -10,8 +8,7 @@ interface HomeScreenProps {
 
 export default function HomeScreen({ setScreen }: HomeScreenProps) {
   const { language, setLanguage, t } = useLanguage();
-  const { profile, updateProfile } = usePlayerProfile();
-  const [showProfile, setShowProfile] = useState(false);
+  const { profile } = usePlayerProfile();
 
   return (
     <div className="min-h-dvh flex flex-col relative overflow-hidden animate-fade-in">
@@ -27,9 +24,9 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
         {language === 'es' ? '🇬🇧' : '🇪🇸'}
       </button>
 
-      {/* Profile button */}
+      {/* Profile button — navigates to profile screen */}
       <button
-        onClick={() => setShowProfile(true)}
+        onClick={() => setScreen('profile')}
         className="absolute top-4 left-4 z-20 flex items-center gap-2 rounded-full bg-slate-800/60 backdrop-blur-sm border border-slate-700/60 px-3 py-1.5 cursor-pointer hover:scale-105 transition-transform active:scale-95"
         aria-label="Profile settings"
       >
@@ -56,15 +53,6 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
           </button>
         </div>
       </div>
-
-      {/* Profile modal */}
-      {showProfile && (
-        <ProfileModal
-          profile={profile}
-          onSave={updateProfile}
-          onClose={() => setShowProfile(false)}
-        />
-      )}
     </div>
   );
 }
