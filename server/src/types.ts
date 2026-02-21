@@ -34,6 +34,22 @@ export interface Player {
   disconnectedAt: number | null; // timestamp when disconnected, null = connected
 }
 
+export interface SessionScore {
+  playerId: string;
+  playerName: string;
+  avatar: string;
+  score: number;
+  roundsWon: number;
+  roundsPlayed: number;
+  impostorCount: number;
+}
+
+export interface RoundScoreDelta {
+  playerId: string;
+  delta: number;
+  reason: 'citizensWin' | 'votedCorrectly' | 'impostorWin' | 'impostorGuess';
+}
+
 export interface Game {
   code: string;
   hostId: string;
@@ -56,6 +72,10 @@ export interface Game {
   voteHistory: Array<Record<string, string>>;
   createdAt: number;
   resultsPersisted: boolean;
+  // Session scoring
+  sessionId: number | null;
+  sessionScores: SessionScore[];
+  lastRoundDeltas: RoundScoreDelta[];
 }
 
 export interface PersonalizedGameState {
@@ -92,4 +112,13 @@ export interface PersonalizedGameState {
   settings: GameSettings;
   eliminationHistory: Array<{ round: number; playerName: string; playerId: string }>;
   lastEliminatedId: string | null;
+  sessionScores: Array<{
+    playerId: string;
+    playerName: string;
+    avatar: string;
+    score: number;
+    roundsWon: number;
+    roundsPlayed: number;
+  }>;
+  lastRoundDeltas: RoundScoreDelta[];
 }

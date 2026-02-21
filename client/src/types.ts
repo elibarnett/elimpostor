@@ -33,6 +33,21 @@ export interface PlayerView {
   isConnected: boolean;
 }
 
+export interface SessionScoreView {
+  playerId: string;
+  playerName: string;
+  avatar: string;
+  score: number;
+  roundsWon: number;
+  roundsPlayed: number;
+}
+
+export interface RoundScoreDelta {
+  playerId: string;
+  delta: number;
+  reason: 'citizensWin' | 'votedCorrectly' | 'impostorWin' | 'impostorGuess';
+}
+
 export interface GameState {
   code: string;
   phase: GamePhase;
@@ -56,6 +71,8 @@ export interface GameState {
   settings: GameSettings;
   eliminationHistory: Array<{ round: number; playerName: string; playerId: string }>;
   lastEliminatedId: string | null;
+  sessionScores: SessionScoreView[];
+  lastRoundDeltas: RoundScoreDelta[];
 }
 
-export type AppScreen = 'home' | 'create' | 'join' | 'game';
+export type AppScreen = 'home' | 'create' | 'join' | 'game' | 'profile';

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import Button from '../components/Button';
+import Scoreboard from '../components/Scoreboard';
 import { useLanguage } from '../hooks/useLanguage';
-import type { GameState } from '../types';
+import type { GameState, RoundScoreDelta } from '../types';
 
 interface ResultsScreenProps {
   gameState: GameState;
@@ -219,6 +220,30 @@ export default function ResultsScreen({ gameState, playAgain, endGame, transferH
             </div>
           </div>
         )}
+
+        {/* Round score breakdown (online mode, when scores exist) */}
+        {!isLocal && gameState.lastRoundDeltas.length > 0 && (
+          <div className="w-full max-w-sm mb-4">
+            <p className="text-slate-400 text-xs text-center mb-2 uppercase tracking-wide">
+              {t('scores.breakdown')}
+            </p>
+            <RoundBreakdown deltas={gameState.lastRoundDeltas} players={gameState.players} t={t} />
+          </div>
+        )}
+
+        {/* Session scoreboard (online mode, when scores exist) */}
+        {!isLocal && gameState.sessionScores.length > 0 && (
+          <div className="w-full max-w-sm mb-6">
+            <p className="text-slate-400 text-xs text-center mb-2 uppercase tracking-wide">
+              {t('scores.title')}
+            </p>
+            <Scoreboard
+              scores={gameState.sessionScores}
+              currentPlayerId={gameState.playerId}
+              deltas={gameState.lastRoundDeltas}
+            />
+          </div>
+        )}
       </div>
 
       {/* Host controls */}
@@ -243,6 +268,41 @@ export default function ResultsScreen({ gameState, playAgain, endGame, transferH
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+function RoundBreakdown({
+  deltas,
+  players,
+  t,
+}: {
+  deltas: RoundScoreDelta[];
+  players: import('../types').PlayerView[];
+  t: (key: import('../translations').TranslationKey, vars?: Record<string, string | number>) => string;
+}) {
+  // Group deltas by player and sum
+  const byPlayer: Record<string, { name: string; avatar: string; total: number; reasons: string[] }> = {};
+  for (const d of deltas) {
+    if (!byPlayer[d.playerId]) {
+      const p = players.find((pl) => pl.id === d.playerId);
+      byPlayer[d.playerId] = { name: p?.name ?? '?', avatar: p?.avatar ?? '👤', total: 0, reasons: [] };
+    }
+    byPlayer[d.playerId].total += d.delta;
+    const reasonKey = `scores.${d.reason}` as import('../translations').TranslationKey;
+    byPlayer[d.playerId].reasons.push(t(reasonKey));
+  }
+
+  return (
+    <div className="space-y-1.5">
+      {Object.entries(byPlayer).map(([pid, info]) => (
+        <div key={pid} className="flex items-center gap-2 text-sm bg-slate-800/50 rounded-xl px-3 py-2">
+          <span className="text-base shrink-0">{info.avatar}</span>
+          <span className="text-slate-300 flex-1 truncate">{info.name}</span>
+          <span className="text-slate-500 text-xs truncate hidden sm:block">{info.reasons.join(', ')}</span>
+          <span className="text-emerald-400 font-bold shrink-0">+{info.total}</span>
+        </div>
+      ))}
     </div>
   );
 }
