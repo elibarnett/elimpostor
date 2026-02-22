@@ -74,6 +74,7 @@ export interface Game {
   resultsPersisted: boolean;
   // Session scoring
   sessionId: number | null;
+  sessionRound: number; // cumulative rounds in this session (never resets on playAgain)
   sessionScores: SessionScore[];
   lastRoundDeltas: RoundScoreDelta[];
 }
