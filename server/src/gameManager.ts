@@ -99,7 +99,7 @@ export class GameManager {
     // Persist session scores fire-and-forget
     if (game.sessionId !== null) {
       const sessionId = game.sessionId;
-      persistSessionScores(sessionId, game.sessionScores, game.round).catch((err) => {
+      persistSessionScores(sessionId, game.sessionScores, game.sessionRound).catch((err) => {
         console.error(`Failed to persist session scores for ${game.code}:`, err);
       });
     }
@@ -240,6 +240,7 @@ export class GameManager {
       createdAt: Date.now(),
       resultsPersisted: false,
       sessionId: null,
+      sessionRound: 0,
       sessionScores: [],
       lastRoundDeltas: [],
     };
@@ -623,6 +624,7 @@ export class GameManager {
     });
     game.votes = {};
     game.round = 1;
+    game.sessionRound++;
     game.turnIndex = 0;
     game.turnDeadline = null;
     game.impostorGuess = null;
@@ -996,7 +998,7 @@ export class GameManager {
     if (game) {
       // Mark session as ended in DB
       if (game.sessionId !== null) {
-        endSession(game.sessionId, game.round).catch(() => {});
+        endSession(game.sessionId, game.sessionRound).catch(() => {});
       }
       // Clean up player-game mappings and timers
       for (const player of game.players) {
