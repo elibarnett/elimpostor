@@ -26,7 +26,10 @@ const DEFAULT_SETTINGS: GameSettings = {
   votingStyle: 'anonymous',
   maxRounds: 1,
   allowSkip: true,
+  discussionTimer: 60,
 };
+
+const MESSAGE_RATE_LIMIT_MS = 2_000; // min ms between messages per player
 
 export class GameManager {
   private games: Map<string, Game> = new Map();
@@ -38,6 +41,8 @@ export class GameManager {
   private turnTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
   // Impostor guess timers: game code -> timeout handle
   private guessTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
+  // Discussion timers: game code -> timeout handle
+  private discussionTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
 
   /** Capture current-round clues into clueHistory before they are cleared. */
   private _snapshotClues(game: Game): void {
@@ -221,6 +226,7 @@ export class GameManager {
           clue: null,
           isEliminated: false,
           disconnectedAt: null,
+          lastMessageAt: null,
         },
       ],
       secretWord: null,
@@ -240,6 +246,8 @@ export class GameManager {
       voteHistory: [],
       createdAt: Date.now(),
       resultsPersisted: false,
+      messages: [],
+      discussionDeadline: null,
       sessionId: null,
       sessionRound: 0,
       sessionScores: [],
@@ -299,9 +307,12 @@ export class GameManager {
     if (partial.language !== undefined) {
       if (!['es', 'en'].includes(partial.language)) return { error: 'invalid_setting' };
     }
+    if (partial.discussionTimer !== undefined) {
+      if (![0, 30, 60, 90].includes(partial.discussionTimer)) return { error: 'invalid_setting' };
+    }
 
     // Only merge known keys
-    const allowed: (keyof GameSettings)[] = ['language', 'elimination', 'clueTimer', 'votingStyle', 'maxRounds', 'allowSkip'];
+    const allowed: (keyof GameSettings)[] = ['language', 'elimination', 'clueTimer', 'votingStyle', 'maxRounds', 'allowSkip', 'discussionTimer'];
     for (const key of allowed) {
       if (key in partial) {
         (game.settings as unknown as Record<string, unknown>)[key] = partial[key];
@@ -337,6 +348,7 @@ export class GameManager {
       clue: null,
       isEliminated: false,
       disconnectedAt: null,
+      lastMessageAt: null,
     };
     game.players.push(player);
     this.playerGameMap.set(playerId, code.toUpperCase());
@@ -368,6 +380,7 @@ export class GameManager {
       clue: null,
       isEliminated: false,
       disconnectedAt: null,
+      lastMessageAt: null,
     };
     game.players.push(spectator);
     this.playerGameMap.set(playerId, code.toUpperCase());
@@ -760,9 +773,89 @@ export class GameManager {
     if (game.hostId !== playerId) return { error: 'not_host' };
 
     this.clearTurnTimer(code);
+    this._snapshotClues(game);
+
+    if (game.mode === 'online' && game.settings.discussionTimer > 0) {
+      game.phase = 'discussion';
+      game.messages = [];
+      game.discussionDeadline = Date.now() + game.settings.discussionTimer * 1000;
+    } else {
+      game.phase = 'voting';
+      game.votes = {};
+    }
+    return { game };
+  }
+
+  /** Transition from discussion to voting (host-initiated or timer expiry). */
+  startDiscussionVoting(playerId: string, code: string): { game?: Game; error?: string } {
+    const game = this.games.get(code);
+    if (!game) return { error: 'room_not_found' };
+    if (game.phase !== 'discussion') return { error: 'wrong_phase' };
+    if (game.hostId !== playerId) return { error: 'not_host' };
+
+    this.clearDiscussionTimer(code);
     game.phase = 'voting';
     game.votes = {};
+    game.discussionDeadline = null;
     return { game };
+  }
+
+  /** Auto-end discussion (timer expiry — no host check). */
+  autoEndDiscussion(code: string): { game?: Game } {
+    const game = this.games.get(code);
+    if (!game || game.phase !== 'discussion') return {};
+    game.phase = 'voting';
+    game.votes = {};
+    game.discussionDeadline = null;
+    return { game };
+  }
+
+  /** Send a chat message during the discussion phase. */
+  sendMessage(playerId: string, code: string, text: string): { game?: Game; error?: string } {
+    const game = this.games.get(code);
+    if (!game) return { error: 'room_not_found' };
+    if (game.phase !== 'discussion') return { error: 'wrong_phase' };
+
+    const player = game.players.find((p) => p.id === playerId);
+    if (!player) return { error: 'player_not_found' };
+    if (player.isSpectator) return { error: 'spectator_cannot_act' };
+
+    const trimmed = text.trim().slice(0, 200);
+    if (!trimmed) return { error: 'empty_message' };
+
+    // Rate limiting: 1 message per 2 seconds
+    const now = Date.now();
+    if (player.lastMessageAt !== null && now - player.lastMessageAt < MESSAGE_RATE_LIMIT_MS) {
+      return { error: 'rate_limited' };
+    }
+    player.lastMessageAt = now;
+
+    game.messages.push({
+      playerId,
+      playerName: player.name,
+      avatar: player.avatar,
+      text: trimmed,
+      timestamp: now,
+    });
+
+    return { game };
+  }
+
+  setDiscussionTimer(code: string, callback: () => void): void {
+    this.clearDiscussionTimer(code);
+    const game = this.games.get(code);
+    if (!game || game.phase !== 'discussion') return;
+    const ms = game.settings.discussionTimer * 1000;
+    const handle = setTimeout(callback, ms);
+    this.discussionTimers.set(code, handle);
+  }
+
+  clearDiscussionTimer(code: string): void {
+    const handle = this.discussionTimers.get(code);
+    if (handle) {
+      clearTimeout(handle);
+      this.discussionTimers.delete(code);
+    }
   }
 
   /** Auto-advance to next round (server-internal, no host check) */
@@ -784,8 +877,16 @@ export class GameManager {
     const game = this.games.get(code);
     if (!game) return {};
     this.clearTurnTimer(code);
-    game.phase = 'voting';
-    game.votes = {};
+    this._snapshotClues(game);
+
+    if (game.mode === 'online' && game.settings.discussionTimer > 0) {
+      game.phase = 'discussion';
+      game.messages = [];
+      game.discussionDeadline = Date.now() + game.settings.discussionTimer * 1000;
+    } else {
+      game.phase = 'voting';
+      game.votes = {};
+    }
     return { game };
   }
 
@@ -955,12 +1056,16 @@ export class GameManager {
     game.clueHistory = {};
     game.voteHistory = [];
     game.resultsPersisted = false;
+    game.messages = [];
+    game.discussionDeadline = null;
     game.lastRoundDeltas = [];
+    this.clearDiscussionTimer(game.code);
     game.players.forEach((p) => {
       if (!p.isSpectator) {
         p.hasSeenRole = false;
         p.clue = null;
         p.isEliminated = false;
+        p.lastMessageAt = null;
       }
     });
 
@@ -998,6 +1103,7 @@ export class GameManager {
   endGame(code: string): void {
     this.clearTurnTimer(code);
     this.clearGuessTimer(code);
+    this.clearDiscussionTimer(code);
     const game = this.games.get(code);
     if (game) {
       // Mark session as ended in DB
@@ -1076,6 +1182,8 @@ export class GameManager {
         return { round: e.round, playerName: p?.name ?? '?', playerId: e.playerId };
       }),
       lastEliminatedId: game.lastEliminatedId,
+      messages: game.phase === 'discussion' ? game.messages : [],
+      discussionDeadline: game.phase === 'discussion' ? game.discussionDeadline : null,
       sessionScores: [...game.sessionScores]
         .sort((a, b) => b.score - a.score || a.playerName.localeCompare(b.playerName))
         .map(({ playerId, playerName, avatar, score, roundsWon, roundsPlayed }) => ({

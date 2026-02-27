@@ -136,6 +136,7 @@ export default function LobbyScreen({ gameState, startGame, setMode, setEliminat
                 settings={gameState.settings}
                 isHost={gameState.isHost}
                 onUpdateSettings={updateSettings}
+                mode={gameState.mode}
               />
             </div>
           </>

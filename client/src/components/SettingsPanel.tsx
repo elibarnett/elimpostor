@@ -6,6 +6,7 @@ interface SettingsPanelProps {
   settings: GameSettings;
   isHost: boolean;
   onUpdateSettings: (settings: Partial<GameSettings>) => void;
+  mode?: 'online' | 'local';
 }
 
 function SegmentedControl<T extends string | number>({
@@ -59,7 +60,7 @@ const PRESETS = {
   },
 };
 
-export default function SettingsPanel({ settings, isHost, onUpdateSettings }: SettingsPanelProps) {
+export default function SettingsPanel({ settings, isHost, onUpdateSettings, mode = 'online' }: SettingsPanelProps) {
   const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -167,6 +168,24 @@ export default function SettingsPanel({ settings, isHost, onUpdateSettings }: Se
               disabled={!isHost}
             />
           </div>
+
+          {/* Discussion Timer (online mode only) */}
+          {mode === 'online' && (
+            <div>
+              <p className="text-slate-400 text-xs mb-1.5">{t('settings.discussionTimer')}</p>
+              <SegmentedControl
+                options={[
+                  { value: 0, label: t('settings.discussionTimerOff') },
+                  { value: 30, label: '30s' },
+                  { value: 60, label: '60s' },
+                  { value: 90, label: '90s' },
+                ]}
+                value={settings.discussionTimer ?? 60}
+                onChange={(v) => onUpdateSettings({ discussionTimer: v as GameSettings['discussionTimer'] })}
+                disabled={!isHost}
+              />
+            </div>
+          )}
         </div>
       )}
     </div>

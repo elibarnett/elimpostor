@@ -3,6 +3,7 @@ export type GamePhase =
   | 'setup'
   | 'reveal'
   | 'clues'
+  | 'discussion'
   | 'voting'
   | 'playing'
   | 'impostor-guess'
@@ -18,6 +19,15 @@ export interface GameSettings {
   votingStyle: 'anonymous' | 'public';
   maxRounds: 1 | 2 | 3;
   allowSkip: boolean;
+  discussionTimer: 0 | 30 | 60 | 90; // seconds; 0 = skip discussion phase
+}
+
+export interface ChatMessage {
+  playerId: string;
+  playerName: string;
+  avatar: string;
+  text: string;
+  timestamp: number;
 }
 
 export interface PlayerView {
@@ -72,6 +82,8 @@ export interface GameState {
   settings: GameSettings;
   eliminationHistory: Array<{ round: number; playerName: string; playerId: string }>;
   lastEliminatedId: string | null;
+  messages: ChatMessage[];
+  discussionDeadline: number | null;
   sessionScores: SessionScoreView[];
   lastRoundDeltas: RoundScoreDelta[];
 }

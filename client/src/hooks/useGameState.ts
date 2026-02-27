@@ -155,6 +155,14 @@ export function useGameState(initialScreen?: AppScreen) {
     emit('game:startVoting');
   }, [emit]);
 
+  const startDiscussionVoting = useCallback(() => {
+    emit('game:startDiscussionVoting');
+  }, [emit]);
+
+  const sendMessage = useCallback((text: string) => {
+    emit('game:sendMessage', { text });
+  }, [emit]);
+
   const vote = useCallback((votedForId: string) => {
     emit('game:vote', { votedForId });
   }, [emit]);
@@ -216,6 +224,8 @@ export function useGameState(initialScreen?: AppScreen) {
     submitClue,
     nextRound,
     startVoting,
+    startDiscussionVoting,
+    sendMessage,
     vote,
     guessWord,
     revealImpostor,
