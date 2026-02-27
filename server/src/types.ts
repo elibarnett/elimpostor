@@ -57,6 +57,7 @@ export interface Game {
   mode: GameMode;
   players: Player[];
   secretWord: string | null;
+  wordCategory: string | null; // category hint shown to all players
   impostorId: string | null;
   votes: Record<string, string>;
   round: number;
@@ -97,6 +98,7 @@ export interface PersonalizedGameState {
   }>;
   spectatorCount: number;
   secretWord: string | null;
+  wordCategory: string | null;
   isImpostor: boolean;
   isSpectator: boolean;
   impostorId: string | null;

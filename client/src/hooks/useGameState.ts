@@ -135,8 +135,8 @@ export function useGameState(initialScreen?: AppScreen) {
     emit('game:start');
   }, [emit]);
 
-  const setWord = useCallback((word: string) => {
-    emit('game:setWord', { word });
+  const setWord = useCallback((word: string, category?: string) => {
+    emit('game:setWord', { word, category });
   }, [emit]);
 
   const markRoleReady = useCallback(() => {
