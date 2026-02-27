@@ -12,6 +12,7 @@ import CluesScreen from './screens/CluesScreen';
 import VotingScreen from './screens/VotingScreen';
 import PlayingScreen from './screens/PlayingScreen';
 import ImpostorGuessScreen from './screens/ImpostorGuessScreen';
+import DiscussionScreen from './screens/DiscussionScreen';
 import EliminationResultsScreen from './screens/EliminationResultsScreen';
 import ResultsScreen from './screens/ResultsScreen';
 import LeaveButton from './components/LeaveButton';
@@ -66,6 +67,14 @@ export default function App() {
               nextRound={game.nextRound}
               startVoting={game.startVoting}
               skipMyTurn={game.skipMyTurn}
+            />
+          );
+        case 'discussion':
+          return (
+            <DiscussionScreen
+              gameState={gs}
+              sendMessage={game.sendMessage}
+              startDiscussionVoting={game.startDiscussionVoting}
             />
           );
         case 'voting':

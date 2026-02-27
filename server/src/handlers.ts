@@ -24,6 +24,16 @@ export function registerHandlers(io: Server, gm: GameManager) {
     });
   }
 
+  /** Start the discussion timer, advancing to voting on expiry. */
+  function startDiscussionTimerIfNeeded(code: string) {
+    const game = gm.getGame(code);
+    if (!game || game.phase !== 'discussion') return;
+    gm.setDiscussionTimer(code, () => {
+      const { game: updated } = gm.autoEndDiscussion(code);
+      if (updated) broadcastState(code);
+    });
+  }
+
   /** Start (or restart) the turn timer. Chains automatically on expiry. Handles auto-advance for maxRounds > 1. */
   function startTurnTimerIfNeeded(code: string) {
     const game = gm.getGame(code);
@@ -42,6 +52,10 @@ export function registerHandlers(io: Server, gm: GameManager) {
           broadcastState(code);
         } else {
           gm.autoStartVoting(code);
+          const updatedGame = gm.getGame(code);
+          if (updatedGame?.phase === 'discussion') {
+            startDiscussionTimerIfNeeded(code);
+          }
           broadcastState(code);
         }
       }
@@ -295,6 +309,34 @@ export function registerHandlers(io: Server, gm: GameManager) {
       const { error } = gm.startVoting(playerId, game.code);
       if (error) {
         socket.emit('game:error', { message: error });
+        return;
+      }
+      const updatedGame = gm.getGame(game.code);
+      if (updatedGame?.phase === 'discussion') {
+        startDiscussionTimerIfNeeded(game.code);
+      }
+      broadcastState(game.code);
+    });
+
+    socket.on('game:startDiscussionVoting', () => {
+      if (!playerId) return;
+      const game = gm.findGameByPlayerId(playerId);
+      if (!game) return;
+      const { error } = gm.startDiscussionVoting(playerId, game.code);
+      if (error) {
+        socket.emit('game:error', { message: error });
+        return;
+      }
+      broadcastState(game.code);
+    });
+
+    socket.on('game:sendMessage', ({ text }: { text: string }) => {
+      if (!playerId) return;
+      const game = gm.findGameByPlayerId(playerId);
+      if (!game) return;
+      const { error } = gm.sendMessage(playerId, game.code, text);
+      if (error) {
+        if (error !== 'rate_limited') socket.emit('game:error', { message: error });
         return;
       }
       broadcastState(game.code);

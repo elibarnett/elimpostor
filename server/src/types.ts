@@ -3,6 +3,7 @@ export type GamePhase =
   | 'setup'
   | 'reveal'
   | 'clues'
+  | 'discussion'
   | 'voting'
   | 'playing'
   | 'impostor-guess'
@@ -18,6 +19,15 @@ export interface GameSettings {
   votingStyle: 'anonymous' | 'public';
   maxRounds: 1 | 2 | 3;
   allowSkip: boolean;
+  discussionTimer: 0 | 30 | 60 | 90; // seconds; 0 = skip discussion phase
+}
+
+export interface ChatMessage {
+  playerId: string;
+  playerName: string;
+  avatar: string;
+  text: string;
+  timestamp: number;
 }
 
 export interface Player {
@@ -32,6 +42,7 @@ export interface Player {
   clue: string | null;
   isEliminated: boolean;
   disconnectedAt: number | null; // timestamp when disconnected, null = connected
+  lastMessageAt: number | null; // for chat rate limiting
 }
 
 export interface SessionScore {
@@ -73,6 +84,9 @@ export interface Game {
   voteHistory: Array<Record<string, string>>;
   createdAt: number;
   resultsPersisted: boolean;
+  // Discussion phase
+  messages: ChatMessage[];
+  discussionDeadline: number | null;
   // Session scoring
   sessionId: number | null;
   sessionRound: number; // cumulative rounds in this session (never resets on playAgain)
@@ -115,6 +129,8 @@ export interface PersonalizedGameState {
   settings: GameSettings;
   eliminationHistory: Array<{ round: number; playerName: string; playerId: string }>;
   lastEliminatedId: string | null;
+  messages: ChatMessage[];
+  discussionDeadline: number | null;
   sessionScores: Array<{
     playerId: string;
     playerName: string;

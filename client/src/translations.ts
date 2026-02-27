@@ -108,6 +108,16 @@ const translations = {
     'elimination.noElimination': 'Empate',
     'elimination.votes': '{count} votos',
 
+    // Discussion
+    'discussion.title': 'Debate',
+    'discussion.hint': '¿Quién crees que es el impostor?',
+    'discussion.placeholder': 'Di lo que piensas...',
+    'discussion.send': 'Enviar',
+    'discussion.startVoting': 'Ir a votación',
+    'discussion.waiting': 'Discutiendo...',
+    'discussion.timeLeft': '{n}s restantes',
+    'discussion.spectating': 'Observando la discusión...',
+
     // Settings
     'settings.title': 'Ajustes',
     'settings.clueTimer': 'Tiempo por pista',
@@ -117,6 +127,8 @@ const translations = {
     'settings.votingPublic': 'Pública',
     'settings.maxRounds': 'Rondas de pistas',
     'settings.allowSkip': 'Pasar turno',
+    'settings.discussionTimer': 'Debate',
+    'settings.discussionTimerOff': 'Sin debate',
     'settings.on': 'Sí',
     'settings.off': 'No',
     'settings.presetClassic': 'Clásico',
@@ -330,6 +342,16 @@ const translations = {
     'elimination.noElimination': 'Tied',
     'elimination.votes': '{count} votes',
 
+    // Discussion
+    'discussion.title': 'Discussion',
+    'discussion.hint': 'Who do you think is the impostor?',
+    'discussion.placeholder': 'Say what you think...',
+    'discussion.send': 'Send',
+    'discussion.startVoting': 'Go to voting',
+    'discussion.waiting': 'Discussing...',
+    'discussion.timeLeft': '{n}s left',
+    'discussion.spectating': 'Watching the discussion...',
+
     // Settings
     'settings.title': 'Settings',
     'settings.clueTimer': 'Clue timer',
@@ -339,6 +361,8 @@ const translations = {
     'settings.votingPublic': 'Public',
     'settings.maxRounds': 'Clue rounds',
     'settings.allowSkip': 'Allow skip',
+    'settings.discussionTimer': 'Discussion',
+    'settings.discussionTimerOff': 'No discussion',
     'settings.on': 'On',
     'settings.off': 'Off',
     'settings.presetClassic': 'Classic',
