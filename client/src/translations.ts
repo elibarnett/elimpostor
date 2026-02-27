@@ -220,6 +220,14 @@ const translations = {
     'category.sports': 'Deportes',
     'category.objects': 'Objetos',
 
+    // Reactions
+    'reaction.suspicious': 'Sospechoso',
+    'reaction.funny': 'Gracioso',
+    'reaction.watching': 'Mirando',
+    'reaction.hotTake': 'Opinión fuerte',
+    'reaction.coldClue': 'Pista fría',
+    'reaction.agree': 'De acuerdo',
+
     // Scores
     'scores.title': 'Tabla de Puntuación',
     'scores.score': 'Puntos',
@@ -453,6 +461,14 @@ const translations = {
     'category.professions': 'Professions',
     'category.sports': 'Sports',
     'category.objects': 'Objects',
+
+    // Reactions
+    'reaction.suspicious': 'Suspicious',
+    'reaction.funny': 'Funny',
+    'reaction.watching': 'Watching',
+    'reaction.hotTake': 'Hot take',
+    'reaction.coldClue': 'Cold clue',
+    'reaction.agree': 'Agree',
 
     // Scores
     'scores.title': 'Scoreboard',

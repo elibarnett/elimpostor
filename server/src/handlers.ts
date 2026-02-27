@@ -4,6 +4,13 @@ import type { GameSettings } from './types.js';
 import { db } from './db/index.js';
 import { players } from './db/schema.js';
 
+const REACTION_RATE_LIMIT_MS = 3_000;
+const VALID_REACTIONS = ['🤔', '😂', '👀', '🔥', '❄️', '👍'] as const;
+type Reaction = (typeof VALID_REACTIONS)[number];
+
+// Track last reaction time per player (ephemeral, in-memory only)
+const lastReactionAt = new Map<string, number>();
+
 export function registerHandlers(io: Server, gm: GameManager) {
   function broadcastState(code: string) {
     const game = gm.getGame(code);
@@ -455,6 +462,37 @@ export function registerHandlers(io: Server, gm: GameManager) {
         if (p.socketId) io.to(p.socketId).emit('game:ended');
       }
       gm.endGame(game.code);
+    });
+
+    socket.on('game:react', ({ emoji }: { emoji: string }) => {
+      if (!playerId) return;
+      const game = gm.findGameByPlayerId(playerId);
+      if (!game) return;
+
+      // Only allowed during clues, voting, and discussion phases
+      const allowed: string[] = ['clues', 'voting', 'discussion'];
+      if (!allowed.includes(game.phase)) return;
+
+      // Validate emoji
+      if (!VALID_REACTIONS.includes(emoji as Reaction)) return;
+
+      // Rate limit
+      const now = Date.now();
+      const last = lastReactionAt.get(playerId) ?? 0;
+      if (now - last < REACTION_RATE_LIMIT_MS) return;
+      lastReactionAt.set(playerId, now);
+
+      // Find the sender's player info for the broadcast
+      const sender = game.players.find((p: { id: string }) => p.id === playerId);
+      if (!sender) return;
+
+      // Broadcast to all players in the room (including sender)
+      io.to(game.code).emit('game:reaction', {
+        playerId,
+        playerName: (sender as { name: string }).name,
+        avatar: (sender as { avatar: string }).avatar,
+        emoji,
+      });
     });
 
     socket.on('disconnect', () => {

@@ -89,3 +89,12 @@ export interface GameState {
 }
 
 export type AppScreen = 'home' | 'create' | 'join' | 'game' | 'profile';
+
+export interface FloatingReactionEvent {
+  id: string;
+  playerId: string;
+  playerName: string;
+  avatar: string;
+  emoji: string;
+  timestamp: number;
+}

@@ -1,15 +1,17 @@
 import { useState } from 'react';
 import Button from '../components/Button';
 import WaitingDots from '../components/WaitingDots';
+import ReactionBar from '../components/ReactionBar';
 import { useLanguage } from '../hooks/useLanguage';
 import type { GameState } from '../types';
 
 interface VotingScreenProps {
   gameState: GameState;
   vote: (votedForId: string) => void;
+  sendReaction: (emoji: string) => void;
 }
 
-export default function VotingScreen({ gameState, vote }: VotingScreenProps) {
+export default function VotingScreen({ gameState, vote, sendReaction }: VotingScreenProps) {
   const { t } = useLanguage();
   const [selected, setSelected] = useState<string | null>(null);
 
@@ -194,6 +196,9 @@ export default function VotingScreen({ gameState, vote }: VotingScreenProps) {
       </div>
 
       <div className="pb-safe space-y-3">
+        {!gameState.isSpectator && (
+          <ReactionBar onReact={sendReaction} />
+        )}
         <p className="text-center text-slate-500 text-sm">
           {t('voting.voted', { count: votedCount, total: totalCount })}
         </p>
