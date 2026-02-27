@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { LanguageContext, useLanguageProvider } from './hooks/useLanguage';
 import { useGameState } from './hooks/useGameState';
+import { getTheme } from './themes';
 import HomeScreen from './screens/HomeScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import CreateScreen from './screens/CreateScreen';
@@ -146,22 +147,30 @@ export default function App() {
   // Auto-discover all bg-*.jpg at build time — just drop new files in src/assets/backgrounds/
   const bgModules = import.meta.glob('./assets/backgrounds/bg-*.jpg', { eager: true, query: '?url', import: 'default' });
   const BACKGROUNDS = Object.values(bgModules) as string[];
+
+  // Use theme background when in a game, otherwise random
+  const theme = getTheme(game.gameState?.settings.theme);
+  const themeBg = BACKGROUNDS[theme.bgIndex - 1] ?? BACKGROUNDS[0];
   const randomBg = useMemo(
     () => BACKGROUNDS[Math.floor(Math.random() * BACKGROUNDS.length)],
     [],
   );
+  const bgImage = game.screen === 'game' ? themeBg : randomBg;
 
   return (
     <LanguageContext.Provider value={lang}>
-      {/* Global background image — randomized per session */}
+      {/* Global background image — themed per game settings */}
       <div
         className="fixed inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: `url(${randomBg})`,
+          backgroundImage: `url(${bgImage})`,
           backgroundColor: '#0f0a1a',
         }}
       />
-      <div className={isHome ? 'relative' : 'max-w-md mx-auto relative'}>
+      <div
+        data-theme={game.screen === 'game' ? theme.id : undefined}
+        className={isHome ? 'relative' : 'max-w-md mx-auto relative'}
+      >
         {/* Connection status banner */}
         {!game.connected && game.screen === 'game' && (
           <div className="fixed top-0 left-0 right-0 z-50 bg-rose-600 text-white text-center text-sm py-2 px-4 animate-fade-in">

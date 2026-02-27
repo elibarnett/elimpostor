@@ -107,6 +107,42 @@
   background: rgba(139, 92, 246, 0.35);
 }
 
+/* === Theme CSS variables === */
+:root {
+  --accent: #7c3aed;
+  --accent-hover: #6d28d9;
+  --accent-border: #8b5cf6;
+  --accent-text: #a78bfa;
+}
+
+[data-theme="medieval"] {
+  --accent: #b45309;
+  --accent-hover: #92400e;
+  --accent-border: #d97706;
+  --accent-text: #fbbf24;
+}
+
+[data-theme="pirate"] {
+  --accent: #0369a1;
+  --accent-hover: #075985;
+  --accent-border: #0ea5e9;
+  --accent-text: #38bdf8;
+}
+
+[data-theme="haunted"] {
+  --accent: #15803d;
+  --accent-hover: #166534;
+  --accent-border: #16a34a;
+  --accent-text: #4ade80;
+}
+
+[data-theme="office"] {
+  --accent: #1d4ed8;
+  --accent-hover: #1e40af;
+  --accent-border: #3b82f6;
+  --accent-text: #60a5fa;
+}
+
 /* Global styles */
 html {
   -webkit-tap-highlight-color: transparent;
