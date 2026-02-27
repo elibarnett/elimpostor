@@ -191,6 +191,23 @@ const translations = {
     'profile.error.unavailable': 'Estadísticas no disponibles ahora mismo.',
     'profile.error.retry': 'Reintentar',
 
+    // Word categories
+    'setup.orPickCategory': 'O elige una categoría',
+    'setup.category': 'Categoría',
+    'setup.difficulty': 'Dificultad',
+    'setup.diffEasy': 'Fácil',
+    'setup.diffMedium': 'Medio',
+    'setup.diffHard': 'Difícil',
+    'setup.randomWord': 'Palabra aleatoria',
+    'setup.categoryHint': 'Categoría: {category}',
+    'category.animals': 'Animales',
+    'category.food': 'Comida',
+    'category.countries': 'Países',
+    'category.movies': 'Películas',
+    'category.professions': 'Profesiones',
+    'category.sports': 'Deportes',
+    'category.objects': 'Objetos',
+
     // Scores
     'scores.title': 'Tabla de Puntuación',
     'scores.score': 'Puntos',
@@ -395,6 +412,23 @@ const translations = {
     'profile.history.player': 'Player',
     'profile.error.unavailable': 'Stats unavailable right now.',
     'profile.error.retry': 'Retry',
+
+    // Word categories
+    'setup.orPickCategory': 'Or pick a category',
+    'setup.category': 'Category',
+    'setup.difficulty': 'Difficulty',
+    'setup.diffEasy': 'Easy',
+    'setup.diffMedium': 'Medium',
+    'setup.diffHard': 'Hard',
+    'setup.randomWord': 'Random Word',
+    'setup.categoryHint': 'Category: {category}',
+    'category.animals': 'Animals',
+    'category.food': 'Food',
+    'category.countries': 'Countries',
+    'category.movies': 'Movies',
+    'category.professions': 'Professions',
+    'category.sports': 'Sports',
+    'category.objects': 'Objects',
 
     // Scores
     'scores.title': 'Scoreboard',

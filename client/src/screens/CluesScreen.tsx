@@ -61,11 +61,16 @@ export default function CluesScreen({
 
   return (
     <div className="min-h-dvh flex flex-col p-6 animate-fade-in">
-      <h2 className="text-xl font-bold text-white text-center mb-4">
+      <h2 className="text-xl font-bold text-white text-center mb-1">
         {gameState.settings.maxRounds > 1
           ? t('clues.roundOf', { n: gameState.round, total: gameState.settings.maxRounds })
           : t('clues.round', { n: gameState.round })}
       </h2>
+      {gameState.wordCategory && (
+        <p className="text-xs text-slate-500 text-center mb-3">
+          {t('setup.categoryHint', { category: gameState.wordCategory })}
+        </p>
+      )}
 
       {meEliminated && (
         <p className="text-center text-slate-500 text-sm mb-2">

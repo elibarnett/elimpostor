@@ -8,6 +8,7 @@ import { GameManager } from './gameManager.js';
 import { registerHandlers } from './handlers.js';
 import { db } from './db/index.js';
 import playerRoutes from './routes/players.js';
+import wordPackRoutes from './routes/wordPacks.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -28,6 +29,7 @@ app.use(express.json());
 
 // REST API routes
 app.use('/api/players', playerRoutes);
+app.use('/api/wordpacks', wordPackRoutes);
 
 // In production, serve built client
 const clientDist = path.join(__dirname, '../../client/dist');
