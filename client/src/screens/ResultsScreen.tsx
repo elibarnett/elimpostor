@@ -1,8 +1,13 @@
 import { useState, useEffect } from 'react';
 import Button from '../components/Button';
 import Scoreboard from '../components/Scoreboard';
+import AchievementToast from '../components/AchievementToast';
 import { useLanguage } from '../hooks/useLanguage';
+import { checkNewAchievements } from '../achievements';
 import type { GameState, RoundScoreDelta } from '../types';
+
+const API_BASE = import.meta.env.DEV ? 'http://localhost:3001' : '';
+const PLAYER_ID_KEY = 'impostor_player_id';
 
 interface ResultsScreenProps {
   gameState: GameState;
@@ -16,6 +21,7 @@ export default function ResultsScreen({ gameState, playAgain, endGame, transferH
   const [phase, setPhase] = useState<'suspense' | 'reveal'>('suspense');
   const [pickingHost, setPickingHost] = useState(false);
   const [selectedHost, setSelectedHost] = useState<string | null>(null);
+  const [newAchievements, setNewAchievements] = useState<string[]>([]);
 
   const isLocal = gameState.mode === 'local';
 
@@ -23,6 +29,20 @@ export default function ResultsScreen({ gameState, playAgain, endGame, transferH
     const timer = setTimeout(() => setPhase('reveal'), 1800);
     return () => clearTimeout(timer);
   }, []);
+
+  // Check achievements after each game result
+  useEffect(() => {
+    const playerId = localStorage.getItem(PLAYER_ID_KEY);
+    if (!playerId) return;
+    fetch(`${API_BASE}/api/players/${playerId}/stats`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((stats) => {
+        if (!stats) return;
+        const newOnes = checkNewAchievements(stats);
+        if (newOnes.length > 0) setNewAchievements(newOnes);
+      })
+      .catch(() => {});
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const impostor = gameState.players.find((p) => p.id === gameState.impostorId);
   const activePlayers = gameState.players.filter((p) => !p.isEliminated && !p.isSpectator);
@@ -111,6 +131,8 @@ export default function ResultsScreen({ gameState, playAgain, endGame, transferH
 
   return (
     <div className="min-h-dvh flex flex-col p-6 animate-fade-in">
+      {/* Achievement toast */}
+      <AchievementToast newIds={newAchievements} onDone={() => setNewAchievements([])} />
       {/* Impostor reveal */}
       <div className="flex-1 flex flex-col items-center justify-center">
         <div className="animate-scale-in text-center mb-6">

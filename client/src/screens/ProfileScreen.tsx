@@ -1,11 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AVATARS } from '../constants';
 import { useLanguage } from '../hooks/useLanguage';
 import { usePlayerProfile } from '../hooks/usePlayerProfile';
 import { usePlayerStats } from '../hooks/usePlayerStats';
+import { ACHIEVEMENTS, getUnlockedAchievements, checkNewAchievements } from '../achievements';
 import type { AppScreen } from '../types';
 import Button from '../components/Button';
 import Input from '../components/Input';
+import AchievementBadge from '../components/AchievementBadge';
+import AchievementToast from '../components/AchievementToast';
 
 interface ProfileScreenProps {
   setScreen: (screen: AppScreen) => void;
@@ -54,6 +57,17 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState('');
   const [editAvatar, setEditAvatar] = useState('');
+  const [newAchievements, setNewAchievements] = useState<string[]>([]);
+  const [unlockedIds, setUnlockedIds] = useState<Record<string, number>>(getUnlockedAchievements);
+
+  useEffect(() => {
+    if (!stats) return;
+    const newOnes = checkNewAchievements(stats);
+    if (newOnes.length > 0) {
+      setNewAchievements(newOnes);
+      setUnlockedIds(getUnlockedAchievements());
+    }
+  }, [stats]);
 
   const startEdit = () => {
     setEditName(profile.displayName);
@@ -72,6 +86,11 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
 
   return (
     <div className="min-h-dvh flex flex-col animate-fade-in pb-8">
+      {/* Achievement toast */}
+      <AchievementToast
+        newIds={newAchievements}
+        onDone={() => setNewAchievements([])}
+      />
       {/* Back button */}
       <button
         onClick={() => setScreen('home')}
@@ -235,6 +254,22 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
                     stats.asImpostor.played === 0 ? '' : winRateColor(stats.asImpostor.winRate)
                   }
                 />
+              </div>
+            </div>
+
+            {/* Achievements */}
+            <div>
+              <p className="text-xs text-slate-400 uppercase tracking-wide font-medium mb-3">
+                {t('achievement.title')}
+              </p>
+              <div className="grid grid-cols-5 gap-2">
+                {ACHIEVEMENTS.map((def) => (
+                  <AchievementBadge
+                    key={def.id}
+                    def={def}
+                    unlocked={!!unlockedIds[def.id]}
+                  />
+                ))}
               </div>
             </div>
 
