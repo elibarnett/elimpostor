@@ -17,6 +17,7 @@ import EliminationResultsScreen from './screens/EliminationResultsScreen';
 import ResultsScreen from './screens/ResultsScreen';
 import LeaveButton from './components/LeaveButton';
 import SpectatorBanner from './components/SpectatorBanner';
+import FloatingReaction from './components/FloatingReaction';
 
 function getInitialJoinCode(): string {
   const params = new URLSearchParams(window.location.search);
@@ -67,6 +68,7 @@ export default function App() {
               nextRound={game.nextRound}
               startVoting={game.startVoting}
               skipMyTurn={game.skipMyTurn}
+              sendReaction={game.sendReaction}
             />
           );
         case 'discussion':
@@ -78,7 +80,7 @@ export default function App() {
             />
           );
         case 'voting':
-          return <VotingScreen gameState={gs} vote={game.vote} />;
+          return <VotingScreen gameState={gs} vote={game.vote} sendReaction={game.sendReaction} />;
         case 'playing':
           return (
             <PlayingScreen
@@ -174,6 +176,8 @@ export default function App() {
             isEliminated={isEliminated}
           />
         )}
+        {/* Floating emoji reactions overlay */}
+        {game.screen === 'game' && <FloatingReaction reactions={game.reactions} />}
         {/* Leave button on all game screens */}
         {game.screen === 'game' && game.gameState && (
           <LeaveButton

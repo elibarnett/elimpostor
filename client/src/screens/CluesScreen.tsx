@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Button from '../components/Button';
 import Input from '../components/Input';
+import ReactionBar from '../components/ReactionBar';
 import { useLanguage } from '../hooks/useLanguage';
 import type { GameState } from '../types';
 
@@ -10,6 +11,7 @@ interface CluesScreenProps {
   nextRound: () => void;
   startVoting: () => void;
   skipMyTurn: () => void;
+  sendReaction: (emoji: string) => void;
 }
 
 export default function CluesScreen({
@@ -18,6 +20,7 @@ export default function CluesScreen({
   nextRound,
   startVoting,
   skipMyTurn,
+  sendReaction,
 }: CluesScreenProps) {
   const { t } = useLanguage();
   const [clue, setClue] = useState('');
@@ -195,6 +198,13 @@ export default function CluesScreen({
               <span className="text-white font-medium ml-auto">"{c.clue}"</span>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Reaction bar */}
+      {!gameState.isSpectator && (
+        <div className="pb-2">
+          <ReactionBar onReact={sendReaction} />
         </div>
       )}
 

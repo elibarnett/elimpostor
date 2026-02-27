@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
-import type { GameState, GameMode, GameSettings, AppScreen } from '../types';
+import type { GameState, GameMode, GameSettings, AppScreen, FloatingReactionEvent } from '../types';
 
 const SOCKET_URL = import.meta.env.DEV ? 'http://localhost:3001' : '';
 
@@ -44,6 +44,7 @@ export function useGameState(initialScreen?: AppScreen) {
   const [screen, setScreen] = useState<AppScreen>(initialScreen ?? 'home');
   const [error, setError] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
+  const [reactions, setReactions] = useState<FloatingReactionEvent[]>([]);
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
@@ -80,6 +81,19 @@ export function useGameState(initialScreen?: AppScreen) {
       setGameState(null);
       setScreen('home');
       setError(null);
+    });
+
+    socket.on('game:reaction', (event: Omit<FloatingReactionEvent, 'id' | 'timestamp'>) => {
+      const reaction: FloatingReactionEvent = {
+        ...event,
+        id: crypto.randomUUID(),
+        timestamp: Date.now(),
+      };
+      setReactions((prev) => [...prev, reaction]);
+      // Auto-remove after animation completes (2.5s)
+      setTimeout(() => {
+        setReactions((prev) => prev.filter((r) => r.id !== reaction.id));
+      }, 2500);
     });
 
     socket.on('disconnect', () => {
@@ -163,6 +177,11 @@ export function useGameState(initialScreen?: AppScreen) {
     emit('game:sendMessage', { text });
   }, [emit]);
 
+  const sendReaction = useCallback((emoji: string) => {
+    emit('game:react', { emoji });
+    if (navigator.vibrate) navigator.vibrate(30);
+  }, [emit]);
+
   const vote = useCallback((votedForId: string) => {
     emit('game:vote', { votedForId });
   }, [emit]);
@@ -226,6 +245,8 @@ export function useGameState(initialScreen?: AppScreen) {
     startVoting,
     startDiscussionVoting,
     sendMessage,
+    sendReaction,
+    reactions,
     vote,
     guessWord,
     revealImpostor,
