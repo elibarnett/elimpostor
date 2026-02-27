@@ -27,7 +27,10 @@ const DEFAULT_SETTINGS: GameSettings = {
   maxRounds: 1,
   allowSkip: true,
   discussionTimer: 60,
+  theme: 'space',
 };
+
+const VALID_THEMES = ['space', 'medieval', 'pirate', 'haunted', 'office'] as const;
 
 const MESSAGE_RATE_LIMIT_MS = 2_000; // min ms between messages per player
 
@@ -310,9 +313,12 @@ export class GameManager {
     if (partial.discussionTimer !== undefined) {
       if (![0, 30, 60, 90].includes(partial.discussionTimer)) return { error: 'invalid_setting' };
     }
+    if (partial.theme !== undefined) {
+      if (!(VALID_THEMES as readonly string[]).includes(partial.theme)) return { error: 'invalid_setting' };
+    }
 
     // Only merge known keys
-    const allowed: (keyof GameSettings)[] = ['language', 'elimination', 'clueTimer', 'votingStyle', 'maxRounds', 'allowSkip', 'discussionTimer'];
+    const allowed: (keyof GameSettings)[] = ['language', 'elimination', 'clueTimer', 'votingStyle', 'maxRounds', 'allowSkip', 'discussionTimer', 'theme'];
     for (const key of allowed) {
       if (key in partial) {
         (game.settings as unknown as Record<string, unknown>)[key] = partial[key];

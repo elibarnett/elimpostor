@@ -12,6 +12,8 @@ export type GamePhase =
 
 export type GameMode = 'online' | 'local';
 
+export type ThemeId = 'space' | 'medieval' | 'pirate' | 'haunted' | 'office';
+
 export interface GameSettings {
   language: 'es' | 'en';
   elimination: boolean;
@@ -20,6 +22,7 @@ export interface GameSettings {
   maxRounds: 1 | 2 | 3;
   allowSkip: boolean;
   discussionTimer: 0 | 30 | 60 | 90; // seconds; 0 = skip discussion phase
+  theme: ThemeId;
 }
 
 export interface ChatMessage {

@@ -20,6 +20,7 @@ export interface GameSettings {
   maxRounds: 1 | 2 | 3;
   allowSkip: boolean;
   discussionTimer: 0 | 30 | 60 | 90; // seconds; 0 = skip discussion phase
+  theme: 'space' | 'medieval' | 'pirate' | 'haunted' | 'office';
 }
 
 export interface ChatMessage {

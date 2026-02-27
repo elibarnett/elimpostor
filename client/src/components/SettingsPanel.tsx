@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useLanguage } from '../hooks/useLanguage';
+import ThemePicker from './ThemePicker';
 import type { GameSettings } from '../types';
 
 interface SettingsPanelProps {
@@ -186,6 +187,13 @@ export default function SettingsPanel({ settings, isHost, onUpdateSettings, mode
               />
             </div>
           )}
+
+          {/* Theme */}
+          <ThemePicker
+            value={settings.theme ?? 'space'}
+            isHost={isHost}
+            onChange={(theme) => onUpdateSettings({ theme })}
+          />
         </div>
       )}
     </div>
