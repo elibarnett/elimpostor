@@ -15,7 +15,7 @@ const CONSONANTS = 'BCDFGHJKLMNPRSTV';
 const VOWELS = 'AEIOU';
 
 // Grace period before actually removing a disconnected player
-const DISCONNECT_GRACE_MS = 30_000; // 30 seconds
+const DISCONNECT_GRACE_MS = 120_000; // 2 minutes — phones lock in ~30-60s, give ample time to rejoin
 // Time limit for impostor's word guess
 const GUESS_TURN_MS = 15_000; // 15 seconds
 

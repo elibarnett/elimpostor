@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { LanguageContext, useLanguageProvider } from './hooks/useLanguage';
 import { useGameState } from './hooks/useGameState';
+import { useWakeLock } from './hooks/useWakeLock';
 import { getTheme } from './themes';
 import HomeScreen from './screens/HomeScreen';
 import ProfileScreen from './screens/ProfileScreen';
@@ -40,6 +41,9 @@ export default function App() {
 
   const isSpectator = game.gameState?.isSpectator ?? false;
   const isEliminated = game.gameState?.players.find((p) => p.id === game.gameState?.playerId)?.isEliminated ?? false;
+
+  // Keep screen awake during active game phases so phones don't sleep mid-game
+  useWakeLock(game.gameState?.phase);
 
   const renderScreen = () => {
     // If in a game, show the phase-appropriate screen
