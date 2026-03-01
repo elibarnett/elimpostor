@@ -233,7 +233,6 @@ export class GameManager {
         },
       ],
       secretWord: null,
-      wordCategory: null,
       impostorId: null,
       votes: {},
       round: 1,
@@ -620,7 +619,7 @@ export class GameManager {
     return { game };
   }
 
-  setWord(playerId: string, code: string, word: string, category?: string): { game?: Game; error?: string } {
+  setWord(playerId: string, code: string, word: string): { game?: Game; error?: string } {
     const game = this.games.get(code);
     if (!game) return { error: 'room_not_found' };
     if (game.phase !== 'setup') return { error: 'wrong_phase' };
@@ -628,7 +627,6 @@ export class GameManager {
     if (!word.trim()) return { error: 'empty_word' };
 
     game.secretWord = word.trim();
-    game.wordCategory = category?.trim() || null;
 
     // Randomly pick impostor (exclude the host and spectators — host chose the word)
     const nonHostPlayers = game.players.filter((p) => p.id !== playerId && !p.isSpectator);
@@ -712,7 +710,6 @@ export class GameManager {
     // Reset for new round
     game.phase = 'setup';
     game.secretWord = null;
-    game.wordCategory = null;
     game.impostorId = null;
     game.votes = {};
     game.round = 1;
@@ -1048,7 +1045,6 @@ export class GameManager {
 
     game.phase = 'setup';
     game.secretWord = null;
-    game.wordCategory = null;
     game.impostorId = null;
     game.votes = {};
     game.round = 1;
@@ -1162,7 +1158,6 @@ export class GameManager {
       })),
       spectatorCount,
       secretWord: showSecretWord,
-      wordCategory: game.wordCategory,
       isImpostor,
       isSpectator,
       // Reveal impostor during impostor-guess and results
