@@ -93,11 +93,6 @@ export default function RevealScreen({ gameState, markRoleReady }: RevealScreenP
                 <p className="text-slate-300 text-center text-sm">
                   {t('reveal.impostorHint')}
                 </p>
-                {gameState.wordCategory && (
-                  <p className="mt-3 text-xs text-slate-400 text-center bg-black/20 rounded-lg px-3 py-1.5">
-                    {t('setup.categoryHint', { category: gameState.wordCategory })}
-                  </p>
-                )}
               </>
             ) : (
               <>
@@ -105,11 +100,6 @@ export default function RevealScreen({ gameState, markRoleReady }: RevealScreenP
                 <h2 className="text-4xl font-bold text-emerald-400 mb-4 text-center">
                   {gameState.secretWord}
                 </h2>
-                {gameState.wordCategory && (
-                  <p className="text-xs text-slate-400 text-center bg-black/20 rounded-lg px-3 py-1.5 mb-2">
-                    {t('setup.categoryHint', { category: gameState.wordCategory })}
-                  </p>
-                )}
                 <p className="text-slate-300 text-center text-sm">
                   {t('reveal.wordHint')}
                 </p>

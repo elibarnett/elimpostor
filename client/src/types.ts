@@ -68,7 +68,6 @@ export interface GameState {
   players: PlayerView[];
   spectatorCount: number;
   secretWord: string | null;
-  wordCategory: string | null;
   isImpostor: boolean;
   isSpectator: boolean;
   impostorId: string | null;

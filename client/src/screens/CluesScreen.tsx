@@ -69,12 +69,6 @@ export default function CluesScreen({
           ? t('clues.roundOf', { n: gameState.round, total: gameState.settings.maxRounds })
           : t('clues.round', { n: gameState.round })}
       </h2>
-      {gameState.wordCategory && (
-        <p className="text-xs text-slate-500 text-center mb-3">
-          {t('setup.categoryHint', { category: gameState.wordCategory })}
-        </p>
-      )}
-
       {meEliminated && (
         <p className="text-center text-slate-500 text-sm mb-2">
           {t('elimination.youAreEliminated')}

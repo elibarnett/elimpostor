@@ -253,11 +253,11 @@ export function registerHandlers(io: Server, gm: GameManager) {
       broadcastState(game.code);
     });
 
-    socket.on('game:setWord', ({ word, category }: { word: string; category?: string }) => {
+    socket.on('game:setWord', ({ word }: { word: string }) => {
       if (!playerId) return;
       const game = gm.findGameByPlayerId(playerId);
       if (!game) return;
-      const { error } = gm.setWord(playerId, game.code, word, category);
+      const { error } = gm.setWord(playerId, game.code, word);
       if (error) {
         socket.emit('game:error', { message: error });
         return;
